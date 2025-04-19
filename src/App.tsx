@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import Streaming from "./pages/Streaming";
 import Database from "./pages/Database";
 import Statistics from "./pages/Statistics";
 import InstallScript from "./pages/InstallScript";
+import Resellers from "./pages/Resellers";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +30,7 @@ const App = () => (
           <Route path="/database" element={<Database />} />
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/install" element={<InstallScript />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/resellers" element={<Resellers />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
