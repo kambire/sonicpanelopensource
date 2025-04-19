@@ -55,7 +55,7 @@ const Sidebar = () => {
         <Link to="/" className="flex items-center gap-2">
           <Radio className="h-6 w-6 text-primary" />
           <span className="text-lg font-bold text-sidebar-foreground">
-            Ondas de Radio
+            Geeks Streaming Panel
           </span>
         </Link>
         {isMobile && (

@@ -25,7 +25,7 @@ const Navbar = () => {
           />
         </div>
         <nav className="hidden gap-4 md:flex md:flex-1 md:justify-center">
-          <h1 className="text-2xl font-bold text-primary">Orquestador de Ondas de Radio</h1>
+          <h1 className="text-2xl font-bold text-primary">Geeks Streaming Panel</h1>
         </nav>
       </div>
       <div className="flex items-center gap-2">
@@ -66,3 +66,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
