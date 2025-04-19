@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -56,7 +55,7 @@ const Sidebar = () => {
         <Link to="/" className="flex items-center gap-2">
           <Radio className="h-6 w-6 text-primary" />
           <span className="text-lg font-bold text-sidebar-foreground">
-            Radio Wave
+            Ondas de Radio
           </span>
         </Link>
         {isMobile && (
@@ -73,17 +72,17 @@ const Sidebar = () => {
       <ScrollArea className="flex-1 px-3 py-4">
         <div className="flex flex-col gap-1">
           <p className="mb-2 px-2 text-xs font-medium text-sidebar-foreground/60">
-            MAIN
+            PRINCIPAL
           </p>
           <NavItem
             icon={<BarChart3 className="h-5 w-5" />}
-            title="Dashboard"
+            title="Panel de Control"
             to="/"
             isActive
           />
           <NavItem
             icon={<Radio className="h-5 w-5" />}
-            title="My Stations"
+            title="Mis Estaciones"
             to="/stations"
             isActive={location.pathname === '/stations'}
           />
@@ -94,36 +93,36 @@ const Sidebar = () => {
           />
           <NavItem
             icon={<BarChart3 className="h-5 w-5" />}
-            title="Statistics"
+            title="Estadísticas"
             to="/statistics"
           />
 
           <p className="mb-2 mt-6 px-2 text-xs font-medium text-sidebar-foreground/60">
-            CONFIGURATION
+            CONFIGURACIÓN
           </p>
           <NavItem
             icon={<Server className="h-5 w-5" />}
-            title="Streaming"
+            title="Transmisión"
             to="/streaming"
           />
           <NavItem
             icon={<Database className="h-5 w-5" />}
-            title="Database"
+            title="Base de Datos"
             to="/database"
           />
           <NavItem
             icon={<Users className="h-5 w-5" />}
-            title="Users"
+            title="Usuarios"
             to="/users"
           />
           <NavItem
             icon={<Settings className="h-5 w-5" />}
-            title="Settings"
+            title="Configuraciones"
             to="/settings"
           />
           <NavItem
             icon={<Server className="h-5 w-5" />}
-            title="Installation"
+            title="Instalación"
             to="/install"
             isActive={location.pathname === '/install'}
           />
@@ -132,7 +131,7 @@ const Sidebar = () => {
       <div className="border-t border-sidebar-border p-4">
         <Button className="w-full gap-2">
           <PlusCircle className="h-5 w-5" />
-          New Station
+          Nueva Estación
         </Button>
       </div>
     </>

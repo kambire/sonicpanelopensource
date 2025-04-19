@@ -20,22 +20,22 @@ const Navbar = () => {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search stations, streams..."
+            placeholder="Buscar estaciones, transmisiones..."
             className="w-full bg-background pl-8 md:w-64"
           />
         </div>
         <nav className="hidden gap-4 md:flex md:flex-1 md:justify-center">
-          <h1 className="text-2xl font-bold text-primary">Radio Wave Orchestrator</h1>
+          <h1 className="text-2xl font-bold text-primary">Orquestador de Ondas de Radio</h1>
         </nav>
       </div>
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" className="text-muted-foreground">
           <Bell className="h-5 w-5" />
-          <span className="sr-only">Notifications</span>
+          <span className="sr-only">Notificaciones</span>
         </Button>
         <Button variant="ghost" size="icon" className="text-muted-foreground">
           <Settings className="h-5 w-5" />
-          <span className="sr-only">Settings</span>
+          <span className="sr-only">Configuraciones</span>
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -52,12 +52,12 @@ const Navbar = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem>Perfil</DropdownMenuItem>
+            <DropdownMenuItem>Configuraciones</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
