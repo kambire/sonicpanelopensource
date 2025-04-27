@@ -10,26 +10,29 @@ import {
 } from "react-simple-maps";
 import { Tooltip } from "react-tooltip";
 
+// Define the Point type to match the expected format for coordinates
+type Point = [number, number];
+
 // GeoJSON map data
 const geoUrl = "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json";
 
 // Sample listener data for different countries
 const listenerData = [
-  { country: "United States", listeners: 450, coordinates: [-95.7129, 37.0902], id: "usa" },
-  { country: "Mexico", listeners: 230, coordinates: [-102.5528, 23.6345], id: "mx" },
-  { country: "Brazil", listeners: 320, coordinates: [-47.9292, -15.7801], id: "br" },
-  { country: "Spain", listeners: 180, coordinates: [-3.7492, 40.4637], id: "es" },
-  { country: "United Kingdom", listeners: 210, coordinates: [-0.1278, 51.5074], id: "uk" },
-  { country: "Germany", listeners: 190, coordinates: [10.4515, 51.1657], id: "de" },
-  { country: "Argentina", listeners: 160, coordinates: [-63.6167, -38.4161], id: "ar" },
-  { country: "Colombia", listeners: 140, coordinates: [-74.2973, 4.5709], id: "co" },
-  { country: "Italy", listeners: 130, coordinates: [12.5674, 41.8719], id: "it" },
-  { country: "France", listeners: 120, coordinates: [2.2137, 46.2276], id: "fr" },
-  { country: "Japan", listeners: 95, coordinates: [138.2529, 36.2048], id: "jp" },
-  { country: "Australia", listeners: 85, coordinates: [133.7751, -25.2744], id: "au" },
-  { country: "Chile", listeners: 75, coordinates: [-71.5430, -35.6751], id: "cl" },
-  { country: "Peru", listeners: 65, coordinates: [-75.0152, -9.1900], id: "pe" },
-  { country: "South Africa", listeners: 55, coordinates: [22.9375, -30.5595], id: "za" },
+  { country: "United States", listeners: 450, coordinates: [-95.7129, 37.0902] as Point, id: "usa" },
+  { country: "Mexico", listeners: 230, coordinates: [-102.5528, 23.6345] as Point, id: "mx" },
+  { country: "Brazil", listeners: 320, coordinates: [-47.9292, -15.7801] as Point, id: "br" },
+  { country: "Spain", listeners: 180, coordinates: [-3.7492, 40.4637] as Point, id: "es" },
+  { country: "United Kingdom", listeners: 210, coordinates: [-0.1278, 51.5074] as Point, id: "uk" },
+  { country: "Germany", listeners: 190, coordinates: [10.4515, 51.1657] as Point, id: "de" },
+  { country: "Argentina", listeners: 160, coordinates: [-63.6167, -38.4161] as Point, id: "ar" },
+  { country: "Colombia", listeners: 140, coordinates: [-74.2973, 4.5709] as Point, id: "co" },
+  { country: "Italy", listeners: 130, coordinates: [12.5674, 41.8719] as Point, id: "it" },
+  { country: "France", listeners: 120, coordinates: [2.2137, 46.2276] as Point, id: "fr" },
+  { country: "Japan", listeners: 95, coordinates: [138.2529, 36.2048] as Point, id: "jp" },
+  { country: "Australia", listeners: 85, coordinates: [133.7751, -25.2744] as Point, id: "au" },
+  { country: "Chile", listeners: 75, coordinates: [-71.5430, -35.6751] as Point, id: "cl" },
+  { country: "Peru", listeners: 65, coordinates: [-75.0152, -9.1900] as Point, id: "pe" },
+  { country: "South Africa", listeners: 55, coordinates: [22.9375, -30.5595] as Point, id: "za" },
 ];
 
 // Function to determine color intensity based on listener count
@@ -64,7 +67,7 @@ const ListenersWorldMap = () => {
               scale: 120,
             }}
           >
-            <ZoomableGroup center={[0, 20]} zoom={1}>
+            <ZoomableGroup center={[0, 20] as Point} zoom={1}>
               <Geographies geography={geoUrl}>
                 {({ geographies }) =>
                   geographies.map((geo) => {
