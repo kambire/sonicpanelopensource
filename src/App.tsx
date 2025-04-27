@@ -19,11 +19,10 @@ import Users from "./pages/Users";
 import Store from "./pages/Store";
 import Billing from "./pages/Billing";
 
-// Move the QueryClient inside the component function
+// Create a client
+const queryClient = new QueryClient();
+
 const App = () => {
-  // Create a new QueryClient instance inside the component
-  const queryClient = new QueryClient();
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
