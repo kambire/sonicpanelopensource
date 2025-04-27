@@ -17,31 +17,35 @@ import ApiIntegration from "./pages/ApiIntegration";
 import EmailManager from "./pages/EmailManager";
 import Users from "./pages/Users";
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/stations" element={<Stations />} />
-          <Route path="/autodj" element={<AutoDJ />} />
-          <Route path="/streaming" element={<Streaming />} />
-          <Route path="/database" element={<Database />} />
-          <Route path="/statistics" element={<Statistics />} />
-          <Route path="/install" element={<InstallScript />} />
-          <Route path="/resellers" element={<Resellers />} />
-          <Route path="/api-integration" element={<ApiIntegration />} />
-          <Route path="/email-manager" element={<EmailManager />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+// Move the QueryClient inside the component function
+const App = () => {
+  // Create a new QueryClient instance inside the component
+  const queryClient = new QueryClient();
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/stations" element={<Stations />} />
+            <Route path="/autodj" element={<AutoDJ />} />
+            <Route path="/streaming" element={<Streaming />} />
+            <Route path="/database" element={<Database />} />
+            <Route path="/statistics" element={<Statistics />} />
+            <Route path="/install" element={<InstallScript />} />
+            <Route path="/resellers" element={<Resellers />} />
+            <Route path="/api-integration" element={<ApiIntegration />} />
+            <Route path="/email-manager" element={<EmailManager />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
