@@ -10,4 +10,5 @@ declare interface ScheduledEvent {
   days: string[];
   repeat: RepeatType;
   active: boolean;
+  date?: Date; // Optional date field for one-time events
 }

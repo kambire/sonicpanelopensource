@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,8 +39,8 @@ const playlists = [
   { id: 7, name: "Jazz Collection", trackCount: 40 },
 ];
 
-// Sample scheduled events
-const initialScheduledEvents = [
+// Sample scheduled events - ensure the repeat property is correctly typed as RepeatType
+const initialScheduledEvents: ScheduledEvent[] = [
   { 
     id: 1, 
     playlistId: 1, 
@@ -76,17 +75,8 @@ const initialScheduledEvents = [
 
 const weekdays = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sáb", "Dom"];
 
-type ScheduledEvent = {
-  id: number;
-  playlistId: number;
-  playlistName: string;
-  startTime: string;
-  endTime: string;
-  days: string[];
-  repeat: "daily" | "weekly" | "monthly" | "once";
-  active: boolean;
-  date?: Date; // For one-time events
-};
+// We now use the existing ScheduledEvent interface from types/scheduler.d.ts
+// which already has the date property as optional
 
 const AdvancedScheduler = () => {
   const [scheduledEvents, setScheduledEvents] = useState<ScheduledEvent[]>(initialScheduledEvents);
@@ -113,10 +103,14 @@ const AdvancedScheduler = () => {
         startTime: currentEvent.startTime || "00:00",
         endTime: currentEvent.endTime || "00:00",
         days: currentEvent.days || [],
-        repeat: currentEvent.repeat as "daily" | "weekly" | "monthly" | "once",
+        repeat: currentEvent.repeat as RepeatType, // Ensure we cast to the RepeatType
         active: currentEvent.active !== undefined ? currentEvent.active : true,
-        date: currentEvent.date,
       };
+
+      // Add the date property only if it exists and repeat is "once"
+      if (currentEvent.date) {
+        (newEvent as any).date = currentEvent.date;
+      }
       
       setScheduledEvents([...scheduledEvents, newEvent]);
       setIsDialogOpen(false);
@@ -197,7 +191,7 @@ const AdvancedScheduler = () => {
                 <Label>Tipo de Repetición</Label>
                 <Select 
                   value={currentEvent.repeat} 
-                  onValueChange={(value: "daily" | "weekly" | "monthly" | "once") => 
+                  onValueChange={(value: RepeatType) => 
                     setCurrentEvent({ ...currentEvent, repeat: value })}
                 >
                   <SelectTrigger>
@@ -365,8 +359,8 @@ const AdvancedScheduler = () => {
                     <TableCell className="font-medium">{event.playlistName}</TableCell>
                     <TableCell>{`${event.startTime} - ${event.endTime}`}</TableCell>
                     <TableCell>
-                      {event.repeat === "once" && event.date 
-                        ? format(event.date, "dd/MM/yyyy")
+                      {event.repeat === "once" && (event as any).date 
+                        ? format((event as any).date, "dd/MM/yyyy")
                         : event.days.join(", ")}
                     </TableCell>
                     <TableCell>
