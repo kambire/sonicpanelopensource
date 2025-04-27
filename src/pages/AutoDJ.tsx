@@ -2,6 +2,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import CurrentlyPlaying from "@/components/autodj/CurrentlyPlaying";
 import PlaylistCard from "@/components/autodj/PlaylistCard";
+import { JinglesScheduler } from "@/components/autodj/JinglesScheduler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -86,6 +87,10 @@ const AutoDJ = () => {
                 <FileAudio className="h-4 w-4" />
                 All Tracks
               </TabsTrigger>
+              <TabsTrigger value="jingles" className="gap-1">
+                <Music className="h-4 w-4" />
+                Viñetas
+              </TabsTrigger>
             </TabsList>
             
             <div className="relative w-full max-w-sm">
@@ -138,6 +143,10 @@ const AutoDJ = () => {
                 ))}
               </div>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="jingles">
+            <JinglesScheduler />
           </TabsContent>
         </Tabs>
       </div>

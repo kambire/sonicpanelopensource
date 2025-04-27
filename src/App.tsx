@@ -15,6 +15,7 @@ import InstallScript from "./pages/InstallScript";
 import Resellers from "./pages/Resellers";
 import ApiIntegration from "./pages/ApiIntegration";
 import EmailManager from "./pages/EmailManager";
+import Users from "./pages/Users";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/resellers" element={<Resellers />} />
           <Route path="/api-integration" element={<ApiIntegration />} />
           <Route path="/email-manager" element={<EmailManager />} />
+          <Route path="/users" element={<Users />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

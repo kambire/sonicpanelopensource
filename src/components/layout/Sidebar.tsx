@@ -17,6 +17,7 @@ import {
   UserPlus,
   Mail,
   Link as LinkIcon,
+  User,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -108,6 +109,12 @@ const Sidebar = () => {
             ADMINISTRACIÓN
           </p>
           <NavItem
+            icon={<User className="h-5 w-5" />}
+            title="Usuarios"
+            to="/users"
+            isActive={location.pathname === '/users'}
+          />
+          <NavItem
             icon={<Users className="h-5 w-5" />}
             title="Revendedores"
             to="/resellers"
@@ -140,12 +147,6 @@ const Sidebar = () => {
             title="Base de Datos"
             to="/database"
             isActive={location.pathname === '/database'}
-          />
-          <NavItem
-            icon={<Users className="h-5 w-5" />}
-            title="Usuarios"
-            to="/users"
-            isActive={location.pathname === '/users'}
           />
           <NavItem
             icon={<Settings className="h-5 w-5" />}
