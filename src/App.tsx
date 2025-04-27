@@ -13,6 +13,8 @@ import Database from "./pages/Database";
 import Statistics from "./pages/Statistics";
 import InstallScript from "./pages/InstallScript";
 import Resellers from "./pages/Resellers";
+import ApiIntegration from "./pages/ApiIntegration";
+import EmailManager from "./pages/EmailManager";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,8 @@ const App = () => (
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/install" element={<InstallScript />} />
           <Route path="/resellers" element={<Resellers />} />
+          <Route path="/api-integration" element={<ApiIntegration />} />
+          <Route path="/email-manager" element={<EmailManager />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

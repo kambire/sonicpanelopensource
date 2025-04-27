@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,9 @@ import {
   Menu,
   X,
   PlusCircle,
+  UserPlus,
+  Mail,
+  Link as LinkIcon,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -42,6 +46,7 @@ const NavItem = ({ icon, title, to, isActive = false }: NavItemProps) => (
 );
 
 const Sidebar = () => {
+  const location = useLocation();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -78,7 +83,7 @@ const Sidebar = () => {
             icon={<BarChart3 className="h-5 w-5" />}
             title="Panel de Control"
             to="/"
-            isActive
+            isActive={location.pathname === '/'}
           />
           <NavItem
             icon={<Radio className="h-5 w-5" />}
@@ -90,11 +95,35 @@ const Sidebar = () => {
             icon={<Music className="h-5 w-5" />}
             title="AutoDJ"
             to="/autodj"
+            isActive={location.pathname === '/autodj'}
           />
           <NavItem
             icon={<BarChart3 className="h-5 w-5" />}
             title="Estadísticas"
             to="/statistics"
+            isActive={location.pathname === '/statistics'}
+          />
+
+          <p className="mb-2 mt-6 px-2 text-xs font-medium text-sidebar-foreground/60">
+            ADMINISTRACIÓN
+          </p>
+          <NavItem
+            icon={<Users className="h-5 w-5" />}
+            title="Revendedores"
+            to="/resellers"
+            isActive={location.pathname === '/resellers'}
+          />
+          <NavItem
+            icon={<LinkIcon className="h-5 w-5" />}
+            title="Integración API"
+            to="/api-integration"
+            isActive={location.pathname === '/api-integration'}
+          />
+          <NavItem
+            icon={<Mail className="h-5 w-5" />}
+            title="Gestor de Correos"
+            to="/email-manager"
+            isActive={location.pathname === '/email-manager'}
           />
 
           <p className="mb-2 mt-6 px-2 text-xs font-medium text-sidebar-foreground/60">
@@ -104,21 +133,25 @@ const Sidebar = () => {
             icon={<Server className="h-5 w-5" />}
             title="Transmisión"
             to="/streaming"
+            isActive={location.pathname === '/streaming'}
           />
           <NavItem
             icon={<Database className="h-5 w-5" />}
             title="Base de Datos"
             to="/database"
+            isActive={location.pathname === '/database'}
           />
           <NavItem
             icon={<Users className="h-5 w-5" />}
             title="Usuarios"
             to="/users"
+            isActive={location.pathname === '/users'}
           />
           <NavItem
             icon={<Settings className="h-5 w-5" />}
             title="Configuraciones"
             to="/settings"
+            isActive={location.pathname === '/settings'}
           />
           <NavItem
             icon={<Server className="h-5 w-5" />}
