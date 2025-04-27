@@ -1,4 +1,3 @@
-
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,6 +27,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import ListenersWorldMap from "@/components/dashboard/ListenersWorldMap";
 
 const dailyListeners = [
   { date: "Mon", listeners: 245 },
@@ -277,6 +277,8 @@ const Statistics = () => {
           
           <TabsContent value="geographic">
             <div className="grid gap-6 md:grid-cols-2">
+              <ListenersWorldMap />
+              
               <Card>
                 <CardHeader>
                   <CardTitle>Listener Geography</CardTitle>

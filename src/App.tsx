@@ -16,6 +16,8 @@ import Resellers from "./pages/Resellers";
 import ApiIntegration from "./pages/ApiIntegration";
 import EmailManager from "./pages/EmailManager";
 import Users from "./pages/Users";
+import Store from "./pages/Store";
+import Billing from "./pages/Billing";
 
 // Move the QueryClient inside the component function
 const App = () => {
@@ -40,6 +42,8 @@ const App = () => {
             <Route path="/api-integration" element={<ApiIntegration />} />
             <Route path="/email-manager" element={<EmailManager />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/store" element={<Store />} />
+            <Route path="/billing" element={<Billing />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

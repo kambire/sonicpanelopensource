@@ -3,10 +3,11 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import CurrentlyPlaying from "@/components/autodj/CurrentlyPlaying";
 import PlaylistCard from "@/components/autodj/PlaylistCard";
 import { JinglesScheduler } from "@/components/autodj/JinglesScheduler";
+import AdvancedScheduler from "@/components/autodj/AdvancedScheduler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileAudio, FolderUp, Music, Plus, Search } from "lucide-react";
+import { FileAudio, FolderUp, Music, Plus, Search, Calendar } from "lucide-react";
 
 const sampleTracks = [
   { id: 1, title: "Summer Nights", artist: "The Radio Band", duration: "3:45" },
@@ -91,6 +92,10 @@ const AutoDJ = () => {
                 <Music className="h-4 w-4" />
                 Viñetas
               </TabsTrigger>
+              <TabsTrigger value="scheduler" className="gap-1">
+                <Calendar className="h-4 w-4" />
+                Programación
+              </TabsTrigger>
             </TabsList>
             
             <div className="relative w-full max-w-sm">
@@ -147,6 +152,10 @@ const AutoDJ = () => {
           
           <TabsContent value="jingles">
             <JinglesScheduler />
+          </TabsContent>
+          
+          <TabsContent value="scheduler">
+            <AdvancedScheduler />
           </TabsContent>
         </Tabs>
       </div>
