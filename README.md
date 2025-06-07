@@ -1,16 +1,17 @@
 
 <div align="center">
   
-# 🎧 Geeks Streaming Panel
+# 🎧 Sonic Panel Open Source
 
 ### Panel de Control Profesional para Radio Streaming
 
-*La solución completa para administrar tus estaciones de radio online*
+*La solución completa y gratuita para administrar tus estaciones de radio online*
 
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20LTS-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)](https://ubuntu.com/)
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Open Source](https://img.shields.io/badge/Open%20Source-❤️-red?style=for-the-badge)](https://github.com/kambire/sonicpanelopensource)
 
 </div>
 
@@ -26,6 +27,7 @@
 👥 **Sistema Multiusuario** - Control de acceso y permisos granulares  
 🛒 **Tienda Integrada** - Planes de hosting y servicios adicionales  
 📧 **Gestión de Email** - Sistema de notificaciones automáticas  
+🆓 **100% Open Source** - Código libre y modificable  
 
 ---
 
@@ -41,14 +43,14 @@
 ### Instalación en Un Solo Comando
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/tu-usuario/geeks-streaming-panel/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/kambire/sonicpanelopensource/main/install.sh | sudo bash
 ```
 
 O descarga y ejecuta manualmente:
 
 ```bash
 # Descargar el script
-wget https://raw.githubusercontent.com/tu-usuario/geeks-streaming-panel/main/install.sh
+wget https://raw.githubusercontent.com/kambire/sonicpanelopensource/main/install.sh
 
 # Hacer ejecutable
 chmod +x install.sh
@@ -59,12 +61,12 @@ sudo ./install.sh
 
 ### 📋 ¿Qué Incluye la Instalación Automática?
 
-- ✅ **Servidor Web** (Apache/Nginx + PHP 8.1)
+- ✅ **Servidor Web** (Apache + PHP 8.1)
 - ✅ **Base de Datos** (MySQL 8.0 + configuración optimizada)
 - ✅ **SHOUTcast Server** (Última versión + configuración automática)
 - ✅ **Icecast Server** (Configuración lista para usar)
-- ✅ **Panel Web** (Geeks Streaming Panel completo)
-- ✅ **SSL/TLS** (Certificados Let's Encrypt opcionales)
+- ✅ **Panel Web** (Sonic Panel completo)
+- ✅ **Node.js** (Para el frontend React)
 - ✅ **Firewall** (Configuración de seguridad automática)
 - ✅ **Servicios Systemd** (Inicio automático al reiniciar)
 
@@ -85,17 +87,25 @@ sudo apt install curl wget git unzip -y
 sudo apt install apache2 mysql-server php php-cli php-fpm php-mysql php-mbstring php-xml php-curl -y
 ```
 
-### 3. Clonar el Repositorio
+### 3. Instalar Node.js
 ```bash
-cd /var/www
-sudo git clone https://github.com/tu-usuario/geeks-streaming-panel.git
-cd geeks-streaming-panel
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
 ```
 
-### 4. Configurar Permisos
+### 4. Clonar el Repositorio
 ```bash
-sudo chown -R www-data:www-data /var/www/geeks-streaming-panel
-sudo chmod -R 755 /var/www/geeks-streaming-panel
+cd /var/www
+sudo git clone https://github.com/kambire/sonicpanelopensource.git
+cd sonicpanelopensource
+```
+
+### 5. Instalar y Construir
+```bash
+npm install
+npm run build
+sudo chown -R www-data:www-data /var/www/sonicpanelopensource
+sudo chmod -R 755 /var/www/sonicpanelopensource
 ```
 
 ---
@@ -109,6 +119,10 @@ Después de la instalación exitosa:
 **🔑 Credenciales por Defecto**:
 - **Usuario**: `admin@geeksstreaming.com`
 - **Contraseña**: `admin123`
+
+**📡 Servidores de Streaming**:
+- **SHOUTcast**: `http://tu-servidor-ip:8000/admin.cgi`
+- **Icecast**: `http://tu-servidor-ip:8080/admin/`
 
 > ⚠️ **IMPORTANTE**: Cambia las credenciales inmediatamente después del primer acceso
 
@@ -149,8 +163,8 @@ Después de la instalación exitosa:
 - **SHOUTcast DNAS** servidor de streaming
 - **Icecast** servidor alternativo
 - **MySQL 8.0** base de datos
-- **Apache/Nginx** servidor web
-- **PHP 8.1** backend logic
+- **Apache** servidor web
+- **Node.js** runtime del frontend
 
 ---
 
@@ -158,16 +172,17 @@ Después de la instalación exitosa:
 
 ### Puertos Utilizados
 - `80/443` - Panel web (HTTP/HTTPS)
-- `8000/8001` - SHOUTcast streams
-- `8080/8081` - Icecast streams
+- `8000` - SHOUTcast streams
+- `8080` - Icecast streams
 - `3306` - MySQL (solo local)
 
 ### Archivos de Configuración
 ```
-/opt/shoutcast/sc_serv.conf         # SHOUTcast
-/etc/icecast2/icecast.xml           # Icecast
-/etc/apache2/sites-available/       # Apache
-/var/www/geeks-streaming-panel/     # Panel Web
+/opt/shoutcast/sc_serv.conf           # SHOUTcast
+/etc/icecast2/icecast.xml             # Icecast
+/etc/apache2/sites-available/         # Apache
+/var/www/sonicpanelopensource/        # Panel Web
+/opt/geeks-streaming-config.txt       # Configuración del sistema
 ```
 
 ---
@@ -190,27 +205,53 @@ sudo journalctl -u shoutcast -f
 
 **🔴 Permisos de archivos**
 ```bash
-sudo chown -R www-data:www-data /var/www/geeks-streaming-panel
-sudo chmod -R 755 /var/www/geeks-streaming-panel
+sudo chown -R www-data:www-data /var/www/sonicpanelopensource
+sudo chmod -R 755 /var/www/sonicpanelopensource
+```
+
+**🔴 Ver configuración del sistema**
+```bash
+cat /opt/geeks-streaming-config.txt
 ```
 
 ---
 
 ## 🔒 Seguridad
 
-### Recomendaciones de Seguridad
-- 🔐 Cambiar credenciales por defecto
-- 🛡️ Configurar firewall UFW
-- 🔒 Instalar certificados SSL
-- 🔄 Actualizaciones regulares del sistema
-- 📝 Logs de auditoría habilitados
+### Credenciales por Defecto a Cambiar
+- **Panel Admin**: `admin@geeksstreaming.com` / `admin123`
+- **SHOUTcast Admin**: `admin_geeks_2024`
+- **SHOUTcast Source**: `source_geeks_2024`
+- **Icecast Admin**: `admin` / `geeks_admin_2024`
+- **Icecast Source**: `geeks_source_2024`
+- **MySQL**: `geeks_user` / `GeeksStreaming2024!`
 
 ### Comando de Seguridad Rápida
 ```bash
-# Aplicar configuración de seguridad básica
-sudo ufw enable
-sudo ufw allow 80,443,8000,8001/tcp
-sudo fail2ban-client start
+# Configuración de firewall (ya incluida en el script)
+sudo ufw status
+```
+
+---
+
+## 🚀 Desarrollo
+
+### Ejecutar en Modo Desarrollo
+```bash
+git clone https://github.com/kambire/sonicpanelopensource.git
+cd sonicpanelopensource
+npm install
+npm run dev
+```
+
+### Estructura del Proyecto
+```
+src/
+├── components/          # Componentes React
+├── pages/              # Páginas principales
+├── lib/                # Utilidades y configuración
+├── hooks/              # React hooks personalizados
+└── types/              # Definiciones de TypeScript
 ```
 
 ---
@@ -218,17 +259,16 @@ sudo fail2ban-client start
 ## 📞 Soporte y Comunidad
 
 ### 🆘 Obtener Ayuda
-- 📖 **Documentación**: [Wiki del Proyecto](https://github.com/tu-usuario/geeks-streaming-panel/wiki)
-- 💬 **Discord**: [Comunidad Geeks Streaming](https://discord.gg/tu-servidor)
-- 🐛 **Issues**: [Reportar Problemas](https://github.com/tu-usuario/geeks-streaming-panel/issues)
-- 📧 **Email**: soporte@geeksstreaming.com
+- 📖 **Documentación**: [Wiki del Proyecto](https://github.com/kambire/sonicpanelopensource/wiki)
+- 🐛 **Issues**: [Reportar Problemas](https://github.com/kambire/sonicpanelopensource/issues)
+- 📧 **Email**: soporte@sonicpanel.com
 
 ### 🤝 Contribuir
 ¿Quieres contribuir? ¡Genial! 
 1. Fork el proyecto
-2. Crea una rama para tu feature
-3. Commit tus cambios
-4. Push a la rama
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
 
 ---
@@ -241,7 +281,7 @@ Este proyecto está bajo la licencia MIT. Ver [LICENSE](LICENSE) para más detal
 
 ## 🙏 Créditos
 
-Desarrollado con ❤️ por el equipo de **Geeks Streaming**
+Desarrollado con ❤️ por la comunidad **Open Source**
 
 **Tecnologías Open Source utilizadas:**
 - [SHOUTcast](https://www.shoutcast.com/) - Servidor de streaming
@@ -256,9 +296,9 @@ Desarrollado con ❤️ por el equipo de **Geeks Streaming**
 
 ### 🌟 ¡Dale una estrella si te gusta el proyecto! ⭐
 
-[![GitHub stars](https://img.shields.io/github/stars/tu-usuario/geeks-streaming-panel?style=social)](https://github.com/tu-usuario/geeks-streaming-panel/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/tu-usuario/geeks-streaming-panel?style=social)](https://github.com/tu-usuario/geeks-streaming-panel/network)
+[![GitHub stars](https://img.shields.io/github/stars/kambire/sonicpanelopensource?style=social)](https://github.com/kambire/sonicpanelopensource/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/kambire/sonicpanelopensource?style=social)](https://github.com/kambire/sonicpanelopensource/network)
 
-**© 2024 Geeks Streaming Panel. Todos los derechos reservados.**
+**© 2024 Sonic Panel Open Source. Código libre bajo licencia MIT.**
 
 </div>
