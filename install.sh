@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # Colores para output
@@ -269,10 +268,14 @@ print_success "Panel instalado"
 # Configurar Apache en puerto 7000
 echo "Listen 7000" >> /etc/apache2/ports.conf
 
+# Deshabilitar el sitio por defecto
+a2dissite 000-default > /dev/null 2>&1
+
 cat > /etc/apache2/sites-available/geeks-streaming.conf << EOL
 <VirtualHost *:7000>
     ServerName _
     DocumentRoot /var/www/geeks-streaming-panel/dist
+    DirectoryIndex index.html
     
     <Directory /var/www/geeks-streaming-panel/dist>
         Options Indexes FollowSymLinks
@@ -306,8 +309,12 @@ a2enmod proxy > /dev/null 2>&1
 a2enmod proxy_http > /dev/null 2>&1
 
 # Habilitar el sitio
-a2dissite 000-default > /dev/null 2>&1
 a2ensite geeks-streaming.conf > /dev/null 2>&1
+
+# Verificar que el directorio dist existe, si no, usar la carpeta principal
+if [ ! -d "/var/www/geeks-streaming-panel/dist" ]; then
+    sed -i 's|/var/www/geeks-streaming-panel/dist|/var/www/geeks-streaming-panel|g' /etc/apache2/sites-available/geeks-streaming.conf
+fi
 
 # 10. Configurar firewall y servicios
 print_step "10" "Configurando firewall y servicios..."
