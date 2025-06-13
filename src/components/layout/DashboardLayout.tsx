@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import {
@@ -21,15 +22,10 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar"
-import { ChevronUp, Home, Music, Podcast, Radio, BarChart3, Users, Database, Mail, Building2, ShoppingCart, CreditCard, Code2, Download, LogOut, User } from "lucide-react"
-
-interface DashboardLayoutProps {
-  children: React.ReactNode
-}
-import { useAuth } from "@/hooks/useAuth";
-import { LogOut, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ChevronUp, LogOut, User } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,10 +33,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu"
+import { AppSidebar } from "@/components/layout/Sidebar"
+
+interface DashboardLayoutProps {
+  children: React.ReactNode
+}
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();

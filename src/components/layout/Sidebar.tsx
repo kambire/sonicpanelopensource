@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import {
   BarChart3,
@@ -17,17 +18,18 @@ import {
   User,
 } from "lucide-react"
 
-import { Sidebar } from "@/components/ui/sidebar"
-import { SidebarFooter } from "@/components/ui/sidebar/sidebar-footer"
-import { SidebarGroup } from "@/components/ui/sidebar/sidebar-group"
-import { SidebarGroupLabel } from "@/components/ui/sidebar/sidebar-group-label"
-import { SidebarHeader } from "@/components/ui/sidebar/sidebar-header"
-import { SidebarMenu } from "@/components/ui/sidebar/sidebar-menu"
-import { SidebarMenuButton } from "@/components/ui/sidebar/sidebar-menu-button"
-import { SidebarMenuItem } from "@/components/ui/sidebar/sidebar-menu-item"
-import { SidebarTrigger } from "@/components/ui/sidebar/sidebar-trigger"
-import { SidebarContent } from "@/components/ui/sidebar/sidebar-content"
-import { useAuth } from "@/hooks/useAuth";
+import { 
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar"
+import { useAuth } from "@/hooks/useAuth"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, isAdmin } = useAuth();
@@ -125,6 +127,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+      
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navegación Principal</SidebarGroupLabel>
@@ -161,6 +164,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         )}
       </SidebarContent>
+      
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
