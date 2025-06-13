@@ -1,172 +1,71 @@
 
 #!/bin/bash
 
-# Colores para output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-WHITE='\033[1;37m'
-NC='\033[0m' # No Color
+# Geeks Streaming Panel - Script de Instalación Automática
+# Para Ubuntu 22.04 LTS
+# Este script automatiza la instalación de todos los componentes necesarios
 
-# Función para mostrar spinner
-show_spinner() {
-    local -r pid="${1}"
-    local -r delay='0.75'
-    local spinstr='\|/-'
-    local temp
-    while ps a | awk '{print $1}' | grep -q "${pid}"; do
-        temp="${spinstr#?}"
-        printf " [%c]  " "${spinstr}"
-        spinstr=${temp}${spinstr%"${temp}"}
-        sleep "${delay}"
-        printf "\b\b\b\b\b\b"
-    done
-    printf "    \b\b\b\b"
-}
-
-# Función para mostrar progreso
-print_step() {
-    echo -e "${CYAN}╭─────────────────────────────────────────────────────╮${NC}"
-    echo -e "${CYAN}│${NC} ${WHITE}[$1/10]${NC} $2"
-    echo -e "${CYAN}╰─────────────────────────────────────────────────────╯${NC}"
-    echo ""
-}
-
-# Función para mostrar éxito
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-    echo ""
-}
-
-# Función para mostrar error
-print_error() {
-    echo -e "${RED}❌ Error: $1${NC}"
-    echo ""
-}
-
-# Función para mostrar advertencia
-print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-    echo ""
-}
-
-# Banner principal
-clear
-echo -e "${PURPLE}"
-echo "╔══════════════════════════════════════════════════════════════════════╗"
-echo "║                                                                      ║"
-echo "║    ███████╗ ██████╗ ███╗   ██╗██╗ ██████╗    ██████╗  █████╗ ███╗   ██║"
-echo "║    ██╔════╝██╔═══██╗████╗  ██║██║██╔════╝    ██╔══██╗██╔══██╗████╗  ██║"
-echo "║    ███████╗██║   ██║██╔██╗ ██║██║██║         ██████╔╝███████║██╔██╗ ██║"
-echo "║    ╚════██║██║   ██║██║╚██╗██║██║██║         ██╔═══╝ ██╔══██║██║╚██╗██║"
-echo "║    ███████║╚██████╔╝██║ ╚████║██║╚██████╗    ██║     ██║  ██║██║ ╚████║"
-echo "║    ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝ ╚═════╝    ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝"
-echo "║                                                                      ║"
-echo "║                     🎵 INSTALACIÓN AUTOMÁTICA 🎵                     ║"
-echo "║                        Panel de Radio Streaming                      ║"
-echo "║                                                                      ║"
-echo "╚══════════════════════════════════════════════════════════════════════╝"
-echo -e "${NC}"
-echo ""
-echo -e "${CYAN}┌─ Información del Sistema ─────────────────────────────────────┐${NC}"
-echo -e "${WHITE}│${NC} 🖥️  OS: $(lsb_release -d | cut -f2)"
-echo -e "${WHITE}│${NC} 🔧 Arquitectura: $(uname -m)"
-echo -e "${WHITE}│${NC} 💾 RAM: $(free -h | awk '/^Mem:/ {print $2}')"
-echo -e "${WHITE}│${NC} 💿 Disco: $(df -h / | awk 'NR==2 {print $4}') disponibles"
-echo -e "${CYAN}└────────────────────────────────────────────────────────────────┘${NC}"
+echo "======================================================"
+echo "    Geeks Streaming Panel - Instalación Automática   "
+echo "======================================================"
+echo "Iniciando instalación en Ubuntu 22.04..."
 echo ""
 
 # Verificar si se ejecuta como root
 if [ "$(id -u)" != "0" ]; then
-   print_error "Este script debe ejecutarse como root (usar sudo)"
+   echo "Este script debe ejecutarse como root (usar sudo)" 1>&2
    exit 1
 fi
 
 # Verificar versión de Ubuntu
 if ! grep -q "22.04" /etc/os-release; then
-    print_warning "Este script está optimizado para Ubuntu 22.04 LTS"
-    echo -e "${YELLOW}¿Desea continuar? (y/N): ${NC}"
-    read -n 1 -r
+    echo "⚠️  Advertencia: Este script está optimizado para Ubuntu 22.04 LTS"
+    read -p "¿Desea continuar? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         exit 1
     fi
 fi
 
-echo -e "${GREEN}🚀 Iniciando instalación...${NC}"
-echo ""
-sleep 2
+# Actualizar sistema
+echo "[1/10] Actualizando paquetes del sistema..."
+apt update && apt upgrade -y
 
-# 1. Actualizar sistema
-print_step "1" "Actualizando paquetes del sistema..."
-{
-    apt update > /dev/null 2>&1 &
-    show_spinner $!
-    apt upgrade -y > /dev/null 2>&1 &
-    show_spinner $!
-}
-print_success "Sistema actualizado correctamente"
+# Instalar dependencias básicas
+echo "[2/10] Instalando dependencias básicas..."
+apt install -y curl wget unzip git build-essential software-properties-common
 
-# 2. Instalar dependencias básicas
-print_step "2" "Instalando dependencias básicas..."
-{
-    apt install -y curl wget unzip git build-essential software-properties-common > /dev/null 2>&1 &
-    show_spinner $!
-}
-print_success "Dependencias básicas instaladas"
+# Instalar Apache y PHP
+echo "[3/10] Instalando servidor web (Apache + PHP)..."
+apt install -y apache2 php php-cli php-fpm php-mysql php-mbstring php-xml php-curl php-zip php-gd php-json
 
-# 3. Instalar Apache y PHP
-print_step "3" "Instalando servidor web (Apache + PHP)..."
-{
-    apt install -y apache2 php php-cli php-fpm php-mysql php-mbstring php-xml php-curl php-zip php-gd php-json > /dev/null 2>&1 &
-    show_spinner $!
-}
-print_success "Servidor web instalado"
+# Instalar MySQL
+echo "[4/10] Instalando y configurando MySQL..."
+apt install -y mysql-server
+systemctl start mysql
+systemctl enable mysql
 
-# 4. Instalar MySQL
-print_step "4" "Instalando y configurando MySQL..."
-{
-    apt install -y mysql-server > /dev/null 2>&1 &
-    show_spinner $!
-    systemctl start mysql > /dev/null 2>&1
-    systemctl enable mysql > /dev/null 2>&1
-}
-print_success "MySQL instalado y configurado"
+# Configurar base de datos
+echo "[5/10] Configurando base de datos..."
+mysql -e "CREATE DATABASE IF NOT EXISTS geeks_streaming CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -e "CREATE USER IF NOT EXISTS 'geeks_user'@'localhost' IDENTIFIED BY 'GeeksStreaming2024!';"
+mysql -e "GRANT ALL PRIVILEGES ON geeks_streaming.* TO 'geeks_user'@'localhost';"
+mysql -e "FLUSH PRIVILEGES;"
 
-# 5. Configurar base de datos
-print_step "5" "Configurando base de datos..."
-{
-    mysql -e "CREATE DATABASE IF NOT EXISTS geeks_streaming CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" > /dev/null 2>&1
-    mysql -e "CREATE USER IF NOT EXISTS 'geeks_user'@'localhost' IDENTIFIED BY 'GeeksStreaming2024!';" > /dev/null 2>&1
-    mysql -e "GRANT ALL PRIVILEGES ON geeks_streaming.* TO 'geeks_user'@'localhost';" > /dev/null 2>&1
-    mysql -e "FLUSH PRIVILEGES;" > /dev/null 2>&1
-}
-print_success "Base de datos configurada"
+# Instalar Node.js y npm (para el frontend)
+echo "[6/10] Instalando Node.js..."
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt install -y nodejs
 
-# 6. Instalar Node.js
-print_step "6" "Instalando Node.js..."
-{
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - > /dev/null 2>&1 &
-    show_spinner $!
-    apt install -y nodejs > /dev/null 2>&1 &
-    show_spinner $!
-}
-print_success "Node.js instalado"
+# Instalar SHOUTcast
+echo "[7/10] Instalando SHOUTcast..."
+mkdir -p /opt/shoutcast
+cd /opt/shoutcast
+wget -O sc_serv.tar.gz "http://download.nullsoft.com/shoutcast/tools/sc_serv2_linux_x64-latest.tar.gz"
+tar -xzf sc_serv.tar.gz
+chmod +x sc_serv
 
-# 7. Instalar SHOUTcast
-print_step "7" "Instalando SHOUTcast..."
-{
-    mkdir -p /opt/shoutcast
-    cd /opt/shoutcast
-    wget -O sc_serv.tar.gz "http://download.nullsoft.com/shoutcast/tools/sc_serv2_linux_x64-latest.tar.gz" > /dev/null 2>&1 &
-    show_spinner $!
-    tar -xzf sc_serv.tar.gz > /dev/null 2>&1
-    chmod +x sc_serv
-}
-
+# Configurar SHOUTcast
 cat > sc_serv.conf << EOL
 adminpassword=admin_geeks_2024
 password=source_geeks_2024
@@ -196,15 +95,11 @@ RestartSec=5
 WantedBy=multi-user.target
 EOL
 
-print_success "SHOUTcast instalado"
+# Instalar Icecast
+echo "[8/10] Instalando Icecast..."
+apt install -y icecast2
 
-# 8. Instalar Icecast
-print_step "8" "Instalando Icecast..."
-{
-    apt install -y icecast2 > /dev/null 2>&1 &
-    show_spinner $!
-}
-
+# Configurar Icecast
 cp /etc/icecast2/icecast.xml /etc/icecast2/icecast.xml.backup
 cat > /etc/icecast2/icecast.xml << EOL
 <icecast>
@@ -247,30 +142,26 @@ cat > /etc/icecast2/icecast.xml << EOL
 </icecast>
 EOL
 
-print_success "Icecast instalado"
+# Clonar e instalar el panel
+echo "[9/10] Instalando Geeks Streaming Panel..."
+cd /var/www
+rm -rf geeks-streaming-panel
+git clone https://github.com/kambire/sonicpanelopensource.git geeks-streaming-panel
+cd geeks-streaming-panel
 
-# 9. Clonar e instalar el panel
-print_step "9" "Instalando Sonic Panel..."
-{
-    cd /var/www
-    rm -rf geeks-streaming-panel > /dev/null 2>&1
-    git clone https://github.com/kambire/sonicpanelopensource.git geeks-streaming-panel > /dev/null 2>&1 &
-    show_spinner $!
-    cd geeks-streaming-panel
-    npm install > /dev/null 2>&1 &
-    show_spinner $!
-    npm run build > /dev/null 2>&1 &
-    show_spinner $!
-    chown -R www-data:www-data /var/www/geeks-streaming-panel
-    chmod -R 755 /var/www/geeks-streaming-panel
-}
-print_success "Panel instalado"
+# Instalar dependencias del frontend
+npm install
 
-# Configurar Apache en puerto 7000
-echo "Listen 7000" >> /etc/apache2/ports.conf
+# Construir el proyecto
+npm run build
 
+# Configurar permisos
+chown -R www-data:www-data /var/www/geeks-streaming-panel
+chmod -R 755 /var/www/geeks-streaming-panel
+
+# Configurar Apache
 cat > /etc/apache2/sites-available/geeks-streaming.conf << EOL
-<VirtualHost *:7000>
+<VirtualHost *:80>
     ServerName _
     DocumentRoot /var/www/geeks-streaming-panel/dist
     
@@ -301,38 +192,38 @@ cat > /etc/apache2/sites-available/geeks-streaming.conf << EOL
 EOL
 
 # Habilitar módulos de Apache necesarios
-a2enmod rewrite > /dev/null 2>&1
-a2enmod proxy > /dev/null 2>&1
-a2enmod proxy_http > /dev/null 2>&1
+a2enmod rewrite
+a2enmod proxy
+a2enmod proxy_http
 
 # Habilitar el sitio
-a2dissite 000-default > /dev/null 2>&1
-a2ensite geeks-streaming.conf > /dev/null 2>&1
+a2dissite 000-default
+a2ensite geeks-streaming.conf
+systemctl restart apache2
 
-# 10. Configurar firewall y servicios
-print_step "10" "Configurando firewall y servicios..."
-{
-    ufw --force enable > /dev/null 2>&1
-    ufw allow 22/tcp > /dev/null 2>&1
-    ufw allow 7000/tcp > /dev/null 2>&1
-    ufw allow 443/tcp > /dev/null 2>&1
-    ufw allow 8000/tcp > /dev/null 2>&1
-    ufw allow 8080/tcp > /dev/null 2>&1
-    
-    systemctl daemon-reload > /dev/null 2>&1
-    systemctl enable shoutcast.service > /dev/null 2>&1
-    systemctl start shoutcast.service > /dev/null 2>&1
-    systemctl enable icecast2 > /dev/null 2>&1
-    systemctl start icecast2 > /dev/null 2>&1
-    systemctl restart apache2 > /dev/null 2>&1
-}
-print_success "Servicios configurados"
+# Configurar firewall
+echo "[10/10] Configurando firewall..."
+ufw --force enable
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 8000/tcp
+ufw allow 8080/tcp
+
+# Iniciar servicios
+systemctl daemon-reload
+systemctl enable shoutcast.service
+systemctl start shoutcast.service
+systemctl enable icecast2
+systemctl start icecast2
+systemctl enable apache2
+systemctl start apache2
 
 # Crear archivo de configuración del sistema
 cat > /opt/geeks-streaming-config.txt << EOL
-=== CONFIGURACIÓN DE SONIC PANEL ===
+=== CONFIGURACIÓN DE GEEKS STREAMING PANEL ===
 
-Panel Web: http://$(curl -s ifconfig.me || echo "TU-IP-PUBLICA"):7000
+Panel Web: http://$(curl -s ifconfig.me || echo "TU-IP-PUBLICA")
 Usuario por defecto: admin@geeksstreaming.com
 Contraseña por defecto: admin123
 
@@ -354,51 +245,37 @@ Base de Datos MySQL:
 - Usuario: geeks_user
 - Contraseña: GeeksStreaming2024!
 
+Archivos de configuración:
+- SHOUTcast: /opt/shoutcast/sc_serv.conf
+- Icecast: /etc/icecast2/icecast.xml
+- Apache: /etc/apache2/sites-available/geeks-streaming.conf
+- Panel: /var/www/geeks-streaming-panel/
+
 Para ver esta información nuevamente: cat /opt/geeks-streaming-config.txt
 EOL
 
 # Limpiar archivos temporales
 cd /tmp
-rm -rf /tmp/geeks-* > /dev/null 2>&1
+rm -rf /tmp/geeks-*
 
-# Banner final
-clear
-echo -e "${GREEN}"
-echo "╔═══════════════════════════════════════════════════════════════════════════╗"
-echo "║                                                                           ║"
-echo "║    🎉 ¡INSTALACIÓN COMPLETADA EXITOSAMENTE! 🎉                           ║"
-echo "║                                                                           ║"
-echo "║         ███████╗██╗   ██╗ ██████╗ ██████╗███████╗███████╗███████╗         ║"
-echo "║         ██╔════╝██║   ██║██╔════╝██╔════╝██╔════╝██╔════╝██╔════╝         ║"
-echo "║         ███████╗██║   ██║██║     ██║     █████╗  ███████╗███████╗         ║"
-echo "║         ╚════██║██║   ██║██║     ██║     ██╔══╝  ╚════██║╚════██║         ║"
-echo "║         ███████║╚██████╔╝╚██████╗╚██████╗███████╗███████║███████║         ║"
-echo "║         ╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝╚══════╝╚══════╝╚══════╝         ║"
-echo "║                                                                           ║"
-echo "╚═══════════════════════════════════════════════════════════════════════════╝"
-echo -e "${NC}"
 echo ""
-echo -e "${CYAN}┌─── Información de Acceso ──────────────────────────────────────┐${NC}"
-echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 🌐 ${BLUE}Panel Web:${NC} http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):7000"
-echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 🔑 ${YELLOW}Credenciales por defecto:${NC}"
-echo -e "${WHITE}│${NC}    Usuario: admin@geeksstreaming.com"
-echo -e "${WHITE}│${NC}    Contraseña: admin123"
-echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 📡 ${PURPLE}Servidores de Streaming:${NC}"
-echo -e "${WHITE}│${NC}    SHOUTcast: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8000/admin.cgi"
-echo -e "${WHITE}│${NC}    Icecast: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8080/admin/"
-echo -e "${WHITE}│${NC}"
-echo -e "${CYAN}└─────────────────────────────────────────────────────────────────┘${NC}"
+echo "======================================================"
+echo "       ¡INSTALACIÓN COMPLETADA EXITOSAMENTE!         "
+echo "======================================================"
 echo ""
-echo -e "${RED}⚠️  IMPORTANTE: ${YELLOW}Cambia las credenciales inmediatamente${NC}"
+echo "🎉 Geeks Streaming Panel ha sido instalado correctamente"
 echo ""
-echo -e "${BLUE}📋 Configuración completa: ${WHITE}cat /opt/geeks-streaming-config.txt${NC}"
+echo "🌐 Accede al panel en: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA")"
 echo ""
-echo -e "${PURPLE}🆘 ¿Necesitas ayuda? ${WHITE}https://github.com/kambire/sonicpanelopensource${NC}"
+echo "🔑 Credenciales por defecto:"
+echo "   Usuario: admin@geeksstreaming.com"
+echo "   Contraseña: admin123"
 echo ""
-echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════════════╗"
-echo "║                     ¡Gracias por usar Sonic Panel!                       ║"
-echo "╚═══════════════════════════════════════════════════════════════════════════╝${NC}"
+echo "⚠️  IMPORTANTE: Cambia las credenciales inmediatamente"
+echo ""
+echo "📋 Para ver la configuración completa:"
+echo "   cat /opt/geeks-streaming-config.txt"
+echo ""
+echo "🆘 ¿Necesitas ayuda? Visita: https://github.com/kambire/sonicpanelopensource"
+echo "======================================================"
 echo ""
