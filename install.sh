@@ -166,7 +166,7 @@ fi
 
 # 2. Instalar dependencias básicas
 print_step "2" "Instalando dependencias básicas..."
-BASIC_DEPS="curl wget unzip git build-essential software-properties-common"
+BASIC_DEPS="curl wget unzip git build-essential software-properties-common debconf-utils"
 log_info "Instalando: $BASIC_DEPS"
 if ! run_command "apt install -y $BASIC_DEPS" "Instalación de dependencias básicas"; then
     log_error "Falló la instalación de dependencias básicas"
@@ -270,10 +270,19 @@ EOL
 
 log_success "SHOUTcast configurado correctamente"
 
-# 8. Instalar Icecast
-print_step "8" "Instalando Icecast..."
-log_info "Instalando Icecast2..."
-if ! run_command "apt install -y icecast2" "Instalación de Icecast2"; then
+# 8. Instalar Icecast de forma no interactiva
+print_step "8" "Instalando Icecast de forma automática..."
+log_info "Preconfiguración de Icecast2 para instalación no interactiva..."
+
+# Preconfigurar respuestas para evitar prompts interactivos
+echo 'icecast2 icecast2/icecast-setup boolean true' | debconf-set-selections
+echo 'icecast2 icecast2/hostname string localhost' | debconf-set-selections
+echo 'icecast2 icecast2/sourcepassword password geeks_source_2024' | debconf-set-selections
+echo 'icecast2 icecast2/relaypassword password geeks_relay_2024' | debconf-set-selections
+echo 'icecast2 icecast2/adminpassword password geeks_admin_2024' | debconf-set-selections
+
+log_info "Instalando Icecast2 de forma no interactiva..."
+if ! run_command "DEBIAN_FRONTEND=noninteractive apt install -y icecast2" "Instalación de Icecast2"; then
     log_error "Falló la instalación de Icecast2"
     exit 1
 fi
@@ -281,7 +290,7 @@ fi
 log_info "Respaldando configuración original de Icecast..."
 run_command "cp /etc/icecast2/icecast.xml /etc/icecast2/icecast.xml.backup" "Backup de configuración Icecast"
 
-log_info "Configurando Icecast..."
+log_info "Configurando Icecast con parámetros personalizados..."
 cat > /etc/icecast2/icecast.xml << EOL
 <icecast>
     <location>Earth</location>
@@ -322,6 +331,10 @@ cat > /etc/icecast2/icecast.xml << EOL
     </logging>
 </icecast>
 EOL
+
+# Habilitar Icecast2 para que inicie automáticamente
+log_info "Habilitando Icecast2 para inicio automático..."
+run_command "sed -i 's/ENABLE=false/ENABLE=true/g' /etc/default/icecast2" "Habilitación de inicio automático Icecast2"
 
 log_success "Icecast configurado correctamente"
 
@@ -515,6 +528,12 @@ echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC} 📡 ${PURPLE}Servidores de Streaming:${NC}"
 echo -e "${WHITE}│${NC}    SHOUTcast: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8000/admin.cgi"
 echo -e "${WHITE}│${NC}    Icecast: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8080/admin/"
+echo -e "${WHITE}│${NC}"
+echo -e "${WHITE}│${NC} 🔐 ${CYAN}Credenciales Icecast:${NC}"
+echo -e "${WHITE}│${NC}    Admin User: admin"
+echo -e "${WHITE}│${NC}    Admin Password: geeks_admin_2024"
+echo -e "${WHITE}│${NC}    Source Password: geeks_source_2024"
+echo -e "${WHITE}│${NC}    Relay Password: geeks_relay_2024"
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC} 📋 ${GRAY}Log detallado:${NC} $LOG_FILE"
 echo -e "${WHITE}│${NC}"
