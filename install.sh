@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Colores para output
@@ -8,49 +9,96 @@ BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 WHITE='\033[1;37m'
+GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
-# Función para mostrar spinner
-show_spinner() {
-    local -r pid="${1}"
-    local -r delay='0.75'
-    local spinstr='\|/-'
-    local temp
-    while ps a | awk '{print $1}' | grep -q "${pid}"; do
-        temp="${spinstr#?}"
-        printf " [%c]  " "${spinstr}"
-        spinstr=${temp}${spinstr%"${temp}"}
-        sleep "${delay}"
-        printf "\b\b\b\b\b\b"
-    done
-    printf "    \b\b\b\b"
+# Variables para logging
+LOG_FILE="/tmp/sonic-install-$(date +%Y%m%d_%H%M%S).log"
+VERBOSE=false
+
+# Función para logging
+log_info() {
+    echo -e "${GRAY}[$(date '+%H:%M:%S')] $1${NC}"
+    echo "[$(date '+%H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+log_success() {
+    echo -e "${GREEN}[$(date '+%H:%M:%S')] ✅ $1${NC}"
+    echo "[$(date '+%H:%M:%S')] SUCCESS: $1" >> "$LOG_FILE"
+}
+
+log_error() {
+    echo -e "${RED}[$(date '+%H:%M:%S')] ❌ $1${NC}"
+    echo "[$(date '+%H:%M:%S')] ERROR: $1" >> "$LOG_FILE"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[$(date '+%H:%M:%S')] ⚠️  $1${NC}"
+    echo "[$(date '+%H:%M:%S')] WARNING: $1" >> "$LOG_FILE"
+}
+
+# Función para ejecutar comandos con logs visibles
+run_command() {
+    local cmd="$1"
+    local description="$2"
+    local show_output="${3:-false}"
+    
+    log_info "$description..."
+    
+    if [ "$show_output" = "true" ] || [ "$VERBOSE" = "true" ]; then
+        if eval "$cmd" 2>&1 | tee -a "$LOG_FILE"; then
+            log_success "$description completado"
+            return 0
+        else
+            log_error "$description falló"
+            return 1
+        fi
+    else
+        if eval "$cmd" >> "$LOG_FILE" 2>&1; then
+            log_success "$description completado"
+            return 0
+        else
+            log_error "$description falló"
+            echo -e "${RED}Ver detalles en: $LOG_FILE${NC}"
+            return 1
+        fi
+    fi
 }
 
 # Función para mostrar progreso
 print_step() {
+    echo ""
     echo -e "${CYAN}╭─────────────────────────────────────────────────────╮${NC}"
     echo -e "${CYAN}│${NC} ${WHITE}[$1/10]${NC} $2"
     echo -e "${CYAN}╰─────────────────────────────────────────────────────╯${NC}"
     echo ""
 }
 
-# Función para mostrar éxito
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-    echo ""
+# Función para mostrar progreso de descarga
+show_download_progress() {
+    local url="$1"
+    local output="$2"
+    local description="$3"
+    
+    log_info "Descargando $description..."
+    if wget --progress=bar:force "$url" -O "$output" 2>&1 | \
+        sed -u 's/.* \([0-9]\+%\)\ \+\([0-9.]\+.\) \(.*\)/\1 (\2\/s) \3/' | \
+        while IFS= read -r line; do
+            echo -e "${BLUE}  → $line${NC}"
+        done; then
+        log_success "$description descargado"
+        return 0
+    else
+        log_error "Falló la descarga de $description"
+        return 1
+    fi
 }
 
-# Función para mostrar error
-print_error() {
-    echo -e "${RED}❌ Error: $1${NC}"
-    echo ""
-}
-
-# Función para mostrar advertencia
-print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-    echo ""
-}
+# Verificar argumentos
+if [[ "$1" == "-v" ]] || [[ "$1" == "--verbose" ]]; then
+    VERBOSE=true
+    log_info "Modo verbose activado"
+fi
 
 # Banner principal
 clear
@@ -75,18 +123,21 @@ echo -e "${WHITE}│${NC} 🖥️  OS: $(lsb_release -d | cut -f2)"
 echo -e "${WHITE}│${NC} 🔧 Arquitectura: $(uname -m)"
 echo -e "${WHITE}│${NC} 💾 RAM: $(free -h | awk '/^Mem:/ {print $2}')"
 echo -e "${WHITE}│${NC} 💿 Disco: $(df -h / | awk 'NR==2 {print $4}') disponibles"
+echo -e "${WHITE}│${NC} 📋 Log: $LOG_FILE"
 echo -e "${CYAN}└────────────────────────────────────────────────────────────────┘${NC}"
 echo ""
 
+log_info "Iniciando instalación de Sonic Panel"
+
 # Verificar si se ejecuta como root
 if [ "$(id -u)" != "0" ]; then
-   print_error "Este script debe ejecutarse como root (usar sudo)"
+   log_error "Este script debe ejecutarse como root (usar sudo)"
    exit 1
 fi
 
 # Verificar versión de Ubuntu
 if ! grep -q "22.04" /etc/os-release; then
-    print_warning "Este script está optimizado para Ubuntu 22.04 LTS"
+    log_warning "Este script está optimizado para Ubuntu 22.04 LTS"
     echo -e "${YELLOW}¿Desea continuar? (y/N): ${NC}"
     read -n 1 -r
     echo
@@ -101,71 +152,93 @@ sleep 2
 
 # 1. Actualizar sistema
 print_step "1" "Actualizando paquetes del sistema..."
-{
-    apt update > /dev/null 2>&1 &
-    show_spinner $!
-    apt upgrade -y > /dev/null 2>&1 &
-    show_spinner $!
-}
-print_success "Sistema actualizado correctamente"
+log_info "Actualizando lista de paquetes..."
+if ! run_command "apt update" "Actualización de lista de paquetes"; then
+    log_error "Falló la actualización de paquetes"
+    exit 1
+fi
+
+log_info "Actualizando paquetes instalados (esto puede tomar varios minutos)..."
+if ! run_command "apt upgrade -y" "Actualización de paquetes del sistema"; then
+    log_error "Falló la actualización del sistema"
+    exit 1
+fi
 
 # 2. Instalar dependencias básicas
 print_step "2" "Instalando dependencias básicas..."
-{
-    apt install -y curl wget unzip git build-essential software-properties-common > /dev/null 2>&1 &
-    show_spinner $!
-}
-print_success "Dependencias básicas instaladas"
+BASIC_DEPS="curl wget unzip git build-essential software-properties-common"
+log_info "Instalando: $BASIC_DEPS"
+if ! run_command "apt install -y $BASIC_DEPS" "Instalación de dependencias básicas"; then
+    log_error "Falló la instalación de dependencias básicas"
+    exit 1
+fi
 
 # 3. Instalar Apache y PHP
 print_step "3" "Instalando servidor web (Apache + PHP)..."
-{
-    apt install -y apache2 php php-cli php-fpm php-mysql php-mbstring php-xml php-curl php-zip php-gd php-json > /dev/null 2>&1 &
-    show_spinner $!
-}
-print_success "Servidor web instalado"
+PHP_PACKAGES="apache2 php php-cli php-fpm php-mysql php-mbstring php-xml php-curl php-zip php-gd php-json"
+log_info "Instalando Apache y PHP con extensiones necesarias..."
+if ! run_command "apt install -y $PHP_PACKAGES" "Instalación de Apache y PHP"; then
+    log_error "Falló la instalación de Apache/PHP"
+    exit 1
+fi
 
 # 4. Instalar MySQL
 print_step "4" "Instalando y configurando MySQL..."
-{
-    apt install -y mysql-server > /dev/null 2>&1 &
-    show_spinner $!
-    systemctl start mysql > /dev/null 2>&1
-    systemctl enable mysql > /dev/null 2>&1
-}
-print_success "MySQL instalado y configurado"
+log_info "Instalando MySQL Server..."
+if ! run_command "apt install -y mysql-server" "Instalación de MySQL"; then
+    log_error "Falló la instalación de MySQL"
+    exit 1
+fi
+
+log_info "Iniciando y habilitando MySQL..."
+run_command "systemctl start mysql" "Inicio de MySQL"
+run_command "systemctl enable mysql" "Habilitación de MySQL"
 
 # 5. Configurar base de datos
 print_step "5" "Configurando base de datos..."
-{
-    mysql -e "CREATE DATABASE IF NOT EXISTS geeks_streaming CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" > /dev/null 2>&1
-    mysql -e "CREATE USER IF NOT EXISTS 'geeks_user'@'localhost' IDENTIFIED BY 'GeeksStreaming2024!';" > /dev/null 2>&1
-    mysql -e "GRANT ALL PRIVILEGES ON geeks_streaming.* TO 'geeks_user'@'localhost';" > /dev/null 2>&1
-    mysql -e "FLUSH PRIVILEGES;" > /dev/null 2>&1
-}
-print_success "Base de datos configurada"
+log_info "Creando base de datos geeks_streaming..."
+run_command "mysql -e \"CREATE DATABASE IF NOT EXISTS geeks_streaming CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\"" "Creación de base de datos"
+
+log_info "Creando usuario de base de datos..."
+run_command "mysql -e \"CREATE USER IF NOT EXISTS 'geeks_user'@'localhost' IDENTIFIED BY 'GeeksStreaming2024!';\"" "Creación de usuario MySQL"
+
+log_info "Asignando permisos..."
+run_command "mysql -e \"GRANT ALL PRIVILEGES ON geeks_streaming.* TO 'geeks_user'@'localhost';\"" "Asignación de permisos"
+run_command "mysql -e \"FLUSH PRIVILEGES;\"" "Actualización de permisos"
 
 # 6. Instalar Node.js
 print_step "6" "Instalando Node.js..."
-{
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - > /dev/null 2>&1 &
-    show_spinner $!
-    apt install -y nodejs > /dev/null 2>&1 &
-    show_spinner $!
-}
-print_success "Node.js instalado"
+log_info "Agregando repositorio de Node.js 18.x..."
+if ! run_command "curl -fsSL https://deb.nodesource.com/setup_18.x | bash -" "Configuración del repositorio Node.js"; then
+    log_error "Falló la configuración del repositorio Node.js"
+    exit 1
+fi
+
+log_info "Instalando Node.js..."
+if ! run_command "apt install -y nodejs" "Instalación de Node.js"; then
+    log_error "Falló la instalación de Node.js"
+    exit 1
+fi
+
+log_info "Node.js instalado: $(node --version), NPM: $(npm --version)"
 
 # 7. Instalar SHOUTcast
 print_step "7" "Instalando SHOUTcast..."
-{
-    mkdir -p /opt/shoutcast
-    cd /opt/shoutcast
-    wget -O sc_serv.tar.gz "http://download.nullsoft.com/shoutcast/tools/sc_serv2_linux_x64-latest.tar.gz" > /dev/null 2>&1 &
-    show_spinner $!
-    tar -xzf sc_serv.tar.gz > /dev/null 2>&1
-    chmod +x sc_serv
-}
+log_info "Creando directorio para SHOUTcast..."
+run_command "mkdir -p /opt/shoutcast" "Creación de directorio SHOUTcast"
 
+cd /opt/shoutcast
+log_info "Descargando SHOUTcast Server..."
+if ! show_download_progress "http://download.nullsoft.com/shoutcast/tools/sc_serv2_linux_x64-latest.tar.gz" "sc_serv.tar.gz" "SHOUTcast Server"; then
+    log_error "Falló la descarga de SHOUTcast"
+    exit 1
+fi
+
+log_info "Extrayendo SHOUTcast..."
+run_command "tar -xzf sc_serv.tar.gz" "Extracción de SHOUTcast"
+run_command "chmod +x sc_serv" "Configuración de permisos SHOUTcast"
+
+log_info "Creando configuración de SHOUTcast..."
 cat > sc_serv.conf << EOL
 adminpassword=admin_geeks_2024
 password=source_geeks_2024
@@ -177,7 +250,7 @@ banfile=/opt/shoutcast/banlist.txt
 ripfile=/opt/shoutcast/riplist.txt
 EOL
 
-# Crear servicio systemd para SHOUTcast
+log_info "Creando servicio systemd para SHOUTcast..."
 cat > /etc/systemd/system/shoutcast.service << EOL
 [Unit]
 Description=SHOUTcast Server
@@ -195,16 +268,20 @@ RestartSec=5
 WantedBy=multi-user.target
 EOL
 
-print_success "SHOUTcast instalado"
+log_success "SHOUTcast configurado correctamente"
 
 # 8. Instalar Icecast
 print_step "8" "Instalando Icecast..."
-{
-    apt install -y icecast2 > /dev/null 2>&1 &
-    show_spinner $!
-}
+log_info "Instalando Icecast2..."
+if ! run_command "apt install -y icecast2" "Instalación de Icecast2"; then
+    log_error "Falló la instalación de Icecast2"
+    exit 1
+fi
 
-cp /etc/icecast2/icecast.xml /etc/icecast2/icecast.xml.backup
+log_info "Respaldando configuración original de Icecast..."
+run_command "cp /etc/icecast2/icecast.xml /etc/icecast2/icecast.xml.backup" "Backup de configuración Icecast"
+
+log_info "Configurando Icecast..."
 cat > /etc/icecast2/icecast.xml << EOL
 <icecast>
     <location>Earth</location>
@@ -246,31 +323,48 @@ cat > /etc/icecast2/icecast.xml << EOL
 </icecast>
 EOL
 
-print_success "Icecast instalado"
+log_success "Icecast configurado correctamente"
 
 # 9. Clonar e instalar el panel
 print_step "9" "Instalando Sonic Panel..."
-{
-    cd /var/www
-    rm -rf geeks-streaming-panel > /dev/null 2>&1
-    git clone https://github.com/kambire/sonicpanelopensource.git geeks-streaming-panel > /dev/null 2>&1 &
-    show_spinner $!
-    cd geeks-streaming-panel
-    npm install > /dev/null 2>&1 &
-    show_spinner $!
-    npm run build > /dev/null 2>&1 &
-    show_spinner $!
-    chown -R www-data:www-data /var/www/geeks-streaming-panel
-    chmod -R 755 /var/www/geeks-streaming-panel
-}
-print_success "Panel instalado"
+log_info "Limpiando instalación anterior si existe..."
+cd /var/www
+run_command "rm -rf geeks-streaming-panel" "Limpieza de instalación anterior"
 
-# Configurar Apache en puerto 7000
-echo "Listen 7000" >> /etc/apache2/ports.conf
+log_info "Clonando repositorio del panel..."
+if ! run_command "git clone https://github.com/kambire/sonicpanelopensource.git geeks-streaming-panel" "Clonación del repositorio"; then
+    log_error "Falló la clonación del repositorio"
+    exit 1
+fi
 
-# Deshabilitar el sitio por defecto
-a2dissite 000-default > /dev/null 2>&1
+cd geeks-streaming-panel
+log_info "Instalando dependencias Node.js (esto puede tomar varios minutos)..."
+if ! run_command "npm install" "Instalación de dependencias Node.js" true; then
+    log_error "Falló la instalación de dependencias"
+    exit 1
+fi
 
+log_info "Construyendo aplicación..."
+if ! run_command "npm run build" "Construcción de la aplicación" true; then
+    log_error "Falló la construcción de la aplicación"
+    exit 1
+fi
+
+log_info "Configurando permisos..."
+run_command "chown -R www-data:www-data /var/www/geeks-streaming-panel" "Configuración de propietarios"
+run_command "chmod -R 755 /var/www/geeks-streaming-panel" "Configuración de permisos"
+
+# Configurar Apache
+log_info "Configurando Apache en puerto 7000..."
+if ! grep -q "Listen 7000" /etc/apache2/ports.conf; then
+    echo "Listen 7000" >> /etc/apache2/ports.conf
+    log_info "Puerto 7000 agregado a Apache"
+fi
+
+log_info "Deshabilitando sitio por defecto..."
+run_command "a2dissite 000-default" "Deshabilitación del sitio por defecto"
+
+log_info "Creando configuración del sitio..."
 cat > /etc/apache2/sites-available/geeks-streaming.conf << EOL
 <VirtualHost *:7000>
     ServerName _
@@ -303,41 +397,64 @@ cat > /etc/apache2/sites-available/geeks-streaming.conf << EOL
 </VirtualHost>
 EOL
 
-# Habilitar módulos de Apache necesarios
-a2enmod rewrite > /dev/null 2>&1
-a2enmod proxy > /dev/null 2>&1
-a2enmod proxy_http > /dev/null 2>&1
-
-# Habilitar el sitio
-a2ensite geeks-streaming.conf > /dev/null 2>&1
-
-# Verificar que el directorio dist existe, si no, usar la carpeta principal
+# Verificar que el directorio dist existe
 if [ ! -d "/var/www/geeks-streaming-panel/dist" ]; then
+    log_warning "Directorio dist no encontrado, usando carpeta principal"
     sed -i 's|/var/www/geeks-streaming-panel/dist|/var/www/geeks-streaming-panel|g' /etc/apache2/sites-available/geeks-streaming.conf
 fi
 
+log_info "Habilitando módulos de Apache..."
+run_command "a2enmod rewrite" "Habilitación de mod_rewrite"
+run_command "a2enmod proxy" "Habilitación de mod_proxy"
+run_command "a2enmod proxy_http" "Habilitación de mod_proxy_http"
+
+log_info "Habilitando sitio..."
+run_command "a2ensite geeks-streaming.conf" "Habilitación del sitio"
+
+log_success "Panel instalado y configurado"
+
 # 10. Configurar firewall y servicios
 print_step "10" "Configurando firewall y servicios..."
-{
-    ufw --force enable > /dev/null 2>&1
-    ufw allow 22/tcp > /dev/null 2>&1
-    ufw allow 7000/tcp > /dev/null 2>&1
-    ufw allow 443/tcp > /dev/null 2>&1
-    ufw allow 8000/tcp > /dev/null 2>&1
-    ufw allow 8080/tcp > /dev/null 2>&1
-    
-    systemctl daemon-reload > /dev/null 2>&1
-    systemctl enable shoutcast.service > /dev/null 2>&1
-    systemctl start shoutcast.service > /dev/null 2>&1
-    systemctl enable icecast2 > /dev/null 2>&1
-    systemctl start icecast2 > /dev/null 2>&1
-    systemctl restart apache2 > /dev/null 2>&1
-}
-print_success "Servicios configurados"
+log_info "Configurando firewall UFW..."
+run_command "ufw --force enable" "Habilitación de UFW"
+run_command "ufw allow 22/tcp" "Permitir SSH"
+run_command "ufw allow 7000/tcp" "Permitir puerto 7000 (Panel)"
+run_command "ufw allow 443/tcp" "Permitir HTTPS"
+run_command "ufw allow 8000/tcp" "Permitir puerto 8000 (SHOUTcast)"
+run_command "ufw allow 8080/tcp" "Permitir puerto 8080 (Icecast)"
+
+log_info "Configurando servicios del sistema..."
+run_command "systemctl daemon-reload" "Recarga de demonios systemd"
+run_command "systemctl enable shoutcast.service" "Habilitación de SHOUTcast"
+run_command "systemctl start shoutcast.service" "Inicio de SHOUTcast"
+run_command "systemctl enable icecast2" "Habilitación de Icecast2"
+run_command "systemctl start icecast2" "Inicio de Icecast2"
+run_command "systemctl restart apache2" "Reinicio de Apache"
+
+log_info "Verificando estado de servicios..."
+if systemctl is-active --quiet apache2; then
+    log_success "Apache ejecutándose correctamente"
+else
+    log_error "Apache no está ejecutándose"
+fi
+
+if systemctl is-active --quiet shoutcast; then
+    log_success "SHOUTcast ejecutándose correctamente"
+else
+    log_warning "SHOUTcast no está ejecutándose"
+fi
+
+if systemctl is-active --quiet icecast2; then
+    log_success "Icecast ejecutándose correctamente"
+else
+    log_warning "Icecast no está ejecutándose"
+fi
 
 # Crear archivo de configuración del sistema
+log_info "Creando archivo de configuración del sistema..."
 cat > /opt/geeks-streaming-config.txt << EOL
 === CONFIGURACIÓN DE SONIC PANEL ===
+Instalado: $(date)
 
 Panel Web: http://$(curl -s ifconfig.me || echo "TU-IP-PUBLICA"):7000
 Usuario por defecto: admin@geeksstreaming.com
@@ -361,12 +478,14 @@ Base de Datos MySQL:
 - Usuario: geeks_user
 - Contraseña: GeeksStreaming2024!
 
+Log de instalación: $LOG_FILE
 Para ver esta información nuevamente: cat /opt/geeks-streaming-config.txt
 EOL
 
 # Limpiar archivos temporales
+log_info "Limpiando archivos temporales..."
 cd /tmp
-rm -rf /tmp/geeks-* > /dev/null 2>&1
+run_command "rm -rf /tmp/geeks-*" "Limpieza de archivos temporales"
 
 # Banner final
 clear
@@ -397,15 +516,21 @@ echo -e "${WHITE}│${NC} 📡 ${PURPLE}Servidores de Streaming:${NC}"
 echo -e "${WHITE}│${NC}    SHOUTcast: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8000/admin.cgi"
 echo -e "${WHITE}│${NC}    Icecast: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8080/admin/"
 echo -e "${WHITE}│${NC}"
+echo -e "${WHITE}│${NC} 📋 ${GRAY}Log detallado:${NC} $LOG_FILE"
+echo -e "${WHITE}│${NC}"
 echo -e "${CYAN}└─────────────────────────────────────────────────────────────────┘${NC}"
 echo ""
 echo -e "${RED}⚠️  IMPORTANTE: ${YELLOW}Cambia las credenciales inmediatamente${NC}"
 echo ""
 echo -e "${BLUE}📋 Configuración completa: ${WHITE}cat /opt/geeks-streaming-config.txt${NC}"
+echo -e "${BLUE}📄 Ver log completo: ${WHITE}cat $LOG_FILE${NC}"
 echo ""
 echo -e "${PURPLE}🆘 ¿Necesitas ayuda? ${WHITE}https://github.com/kambire/sonicpanelopensource${NC}"
 echo ""
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════════════╗"
 echo "║                     ¡Gracias por usar Sonic Panel!                       ║"
+echo "║              Usa 'sudo ./install.sh -v' para modo verbose                ║"
 echo "╚═══════════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
+
+log_success "Instalación de Sonic Panel completada exitosamente"
