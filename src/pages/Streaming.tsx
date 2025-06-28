@@ -14,9 +14,9 @@ const Streaming = () => {
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Streaming</h1>
+            <h1 className="text-3xl font-bold tracking-tight">SHOUTcast Streaming</h1>
             <p className="text-muted-foreground mt-1">
-              Configure your streaming servers and connection settings
+              Configure your SHOUTcast server and connection settings
             </p>
           </div>
         </div>
@@ -25,7 +25,7 @@ const Streaming = () => {
           <TabsList className="mb-6">
             <TabsTrigger value="server">Server Configuration</TabsTrigger>
             <TabsTrigger value="source">Source Client</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            <TabsTrigger value="logs">Server Logs</TabsTrigger>
           </TabsList>
           
           <TabsContent value="server">
@@ -38,7 +38,7 @@ const Streaming = () => {
                 <CardHeader>
                   <CardTitle>Source Client Configuration</CardTitle>
                   <CardDescription>
-                    Configure your broadcasting software to connect to your server
+                    Configure your broadcasting software to connect to your SHOUTcast server
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -74,11 +74,6 @@ const Streaming = () => {
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="mount">Mount Point</Label>
-                          <Input id="mount" defaultValue="/mainstream" />
-                        </div>
-                        
-                        <div className="space-y-2">
                           <Label htmlFor="source-password">Source Password</Label>
                           <Input id="source-password" type="password" defaultValue="********" />
                         </div>
@@ -100,19 +95,19 @@ const Streaming = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="advanced">
+          <TabsContent value="logs">
             <Card>
               <CardHeader>
-                <CardTitle>Server Logs</CardTitle>
+                <CardTitle>SHOUTcast Server Logs</CardTitle>
                 <CardDescription>
-                  View real-time streaming server logs and debug information
+                  View real-time SHOUTcast server logs and debug information
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="bg-black rounded-md p-4 text-white font-mono text-sm">
                   <div className="flex gap-2 items-center text-green-400 mb-2">
                     <Terminal className="h-4 w-4" />
-                    <span>Server logs:</span>
+                    <span>SHOUTcast server logs:</span>
                   </div>
                   <div className="max-h-96 overflow-y-auto space-y-1">
                     {Array.from({ length: 15 }).map((_, i) => (
@@ -120,9 +115,9 @@ const Streaming = () => {
                         <span className="text-blue-400">[{new Date().toISOString()}]</span>{" "}
                         <span className="text-yellow-400">INFO</span>{" "}
                         {[
-                          "Server started successfully on port 8000",
+                          "SHOUTcast server started successfully on port 8000",
                           "New client connected from 192.168.1.42",
-                          "Source client connected - mountpoint: /mainstream",
+                          "Source client connected successfully",
                           "Playlist loaded: Daytime Mix with 45 tracks",
                           "Now playing: Summer Nights - The Radio Band",
                           "Client disconnected: 192.168.1.105",

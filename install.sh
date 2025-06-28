@@ -69,7 +69,7 @@ run_command() {
 print_step() {
     echo ""
     echo -e "${CYAN}╭─────────────────────────────────────────────────────╮${NC}"
-    echo -e "${CYAN}│${NC} ${WHITE}[$1/10]${NC} $2"
+    echo -e "${CYAN}│${NC} ${WHITE}[$1/9]${NC} $2"
     echo -e "${CYAN}╰─────────────────────────────────────────────────────╯${NC}"
     echo ""
 }
@@ -114,6 +114,7 @@ echo "║    ╚══════╝ ╚═════╝ ╚═╝  ╚══
 echo "║                                                                      ║"
 echo "║                     🎵 INSTALACIÓN AUTOMÁTICA 🎵                     ║"
 echo "║                        Panel de Radio Streaming                      ║"
+echo "║                        Solo SHOUTcast Server                         ║"
 echo "║                                                                      ║"
 echo "╚══════════════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
@@ -127,7 +128,7 @@ echo -e "${WHITE}│${NC} 📋 Log: $LOG_FILE"
 echo -e "${CYAN}└────────────────────────────────────────────────────────────────┘${NC}"
 echo ""
 
-log_info "Iniciando instalación de Sonic Panel"
+log_info "Iniciando instalación de Sonic Panel (Solo SHOUTcast)"
 
 # Verificar si se ejecuta como root
 if [ "$(id -u)" != "0" ]; then
@@ -222,7 +223,7 @@ fi
 
 log_info "Node.js instalado: $(node --version), NPM: $(npm --version)"
 
-# 7. Instalar SHOUTcast
+# 7. Instalar SHOUTcast solamente
 print_step "7" "Instalando SHOUTcast..."
 log_info "Creando directorio para SHOUTcast..."
 run_command "mkdir -p /opt/shoutcast" "Creación de directorio SHOUTcast"
@@ -270,76 +271,8 @@ EOL
 
 log_success "SHOUTcast configurado correctamente"
 
-# 8. Instalar Icecast de forma no interactiva
-print_step "8" "Instalando Icecast de forma automática..."
-log_info "Preconfiguración de Icecast2 para instalación no interactiva..."
-
-# Preconfigurar respuestas para evitar prompts interactivos
-echo 'icecast2 icecast2/icecast-setup boolean true' | debconf-set-selections
-echo 'icecast2 icecast2/hostname string localhost' | debconf-set-selections
-echo 'icecast2 icecast2/sourcepassword password geeks_source_2024' | debconf-set-selections
-echo 'icecast2 icecast2/relaypassword password geeks_relay_2024' | debconf-set-selections
-echo 'icecast2 icecast2/adminpassword password geeks_admin_2024' | debconf-set-selections
-
-log_info "Instalando Icecast2 de forma no interactiva..."
-if ! run_command "DEBIAN_FRONTEND=noninteractive apt install -y icecast2" "Instalación de Icecast2"; then
-    log_error "Falló la instalación de Icecast2"
-    exit 1
-fi
-
-log_info "Respaldando configuración original de Icecast..."
-run_command "cp /etc/icecast2/icecast.xml /etc/icecast2/icecast.xml.backup" "Backup de configuración Icecast"
-
-log_info "Configurando Icecast con parámetros personalizados..."
-cat > /etc/icecast2/icecast.xml << EOL
-<icecast>
-    <location>Earth</location>
-    <admin>admin@geeksstreaming.com</admin>
-    <limits>
-        <clients>100</clients>
-        <sources>2</sources>
-        <queue-size>524288</queue-size>
-        <client-timeout>30</client-timeout>
-        <header-timeout>15</header-timeout>
-        <source-timeout>10</source-timeout>
-        <burst-on-connect>1</burst-on-connect>
-        <burst-size>65535</burst-size>
-    </limits>
-    <authentication>
-        <source-password>geeks_source_2024</source-password>
-        <relay-password>geeks_relay_2024</relay-password>
-        <admin-user>admin</admin-user>
-        <admin-password>geeks_admin_2024</admin-password>
-    </authentication>
-    <hostname>localhost</hostname>
-    <listen-socket>
-        <port>8080</port>
-    </listen-socket>
-    <fileserve>1</fileserve>
-    <paths>
-        <basedir>/usr/share/icecast2</basedir>
-        <logdir>/var/log/icecast2</logdir>
-        <webroot>/usr/share/icecast2/web</webroot>
-        <adminroot>/usr/share/icecast2/admin</adminroot>
-        <alias source="/" destination="/status.xsl"/>
-    </paths>
-    <logging>
-        <accesslog>access.log</accesslog>
-        <errorlog>error.log</errorlog>
-        <loglevel>3</loglevel>
-        <logsize>10000</logsize>
-    </logging>
-</icecast>
-EOL
-
-# Habilitar Icecast2 para que inicie automáticamente
-log_info "Habilitando Icecast2 para inicio automático..."
-run_command "sed -i 's/ENABLE=false/ENABLE=true/g' /etc/default/icecast2" "Habilitación de inicio automático Icecast2"
-
-log_success "Icecast configurado correctamente"
-
-# 9. Clonar e instalar el panel
-print_step "9" "Instalando Sonic Panel..."
+# 8. Clonar e instalar el panel
+print_step "8" "Instalando Sonic Panel..."
 log_info "Limpiando instalación anterior si existe..."
 cd /var/www
 run_command "rm -rf geeks-streaming-panel" "Limpieza de instalación anterior"
@@ -398,12 +331,10 @@ cat > /etc/apache2/sites-available/geeks-streaming.conf << EOL
         RewriteRule . /index.html [L]
     </Directory>
     
-    # Proxy para APIs de streaming
+    # Proxy para API de SHOUTcast
     ProxyPreserveHost On
     ProxyPass /shoutcast/ http://localhost:8000/
     ProxyPassReverse /shoutcast/ http://localhost:8000/
-    ProxyPass /icecast/ http://localhost:8080/
-    ProxyPassReverse /icecast/ http://localhost:8080/
     
     ErrorLog \${APACHE_LOG_DIR}/geeks-streaming-error.log
     CustomLog \${APACHE_LOG_DIR}/geeks-streaming-access.log combined
@@ -426,22 +357,19 @@ run_command "a2ensite geeks-streaming.conf" "Habilitación del sitio"
 
 log_success "Panel instalado y configurado"
 
-# 10. Configurar firewall y servicios
-print_step "10" "Configurando firewall y servicios..."
+# 9. Configurar firewall y servicios
+print_step "9" "Configurando firewall y servicios..."
 log_info "Configurando firewall UFW..."
 run_command "ufw --force enable" "Habilitación de UFW"
 run_command "ufw allow 22/tcp" "Permitir SSH"
 run_command "ufw allow 7000/tcp" "Permitir puerto 7000 (Panel)"
 run_command "ufw allow 443/tcp" "Permitir HTTPS"
 run_command "ufw allow 8000/tcp" "Permitir puerto 8000 (SHOUTcast)"
-run_command "ufw allow 8080/tcp" "Permitir puerto 8080 (Icecast)"
 
 log_info "Configurando servicios del sistema..."
 run_command "systemctl daemon-reload" "Recarga de demonios systemd"
 run_command "systemctl enable shoutcast.service" "Habilitación de SHOUTcast"
 run_command "systemctl start shoutcast.service" "Inicio de SHOUTcast"
-run_command "systemctl enable icecast2" "Habilitación de Icecast2"
-run_command "systemctl start icecast2" "Inicio de Icecast2"
 run_command "systemctl restart apache2" "Reinicio de Apache"
 
 log_info "Verificando estado de servicios..."
@@ -457,16 +385,10 @@ else
     log_warning "SHOUTcast no está ejecutándose"
 fi
 
-if systemctl is-active --quiet icecast2; then
-    log_success "Icecast ejecutándose correctamente"
-else
-    log_warning "Icecast no está ejecutándose"
-fi
-
 # Crear archivo de configuración del sistema
 log_info "Creando archivo de configuración del sistema..."
 cat > /opt/geeks-streaming-config.txt << EOL
-=== CONFIGURACIÓN DE SONIC PANEL ===
+=== CONFIGURACIÓN DE SONIC PANEL (Solo SHOUTcast) ===
 Instalado: $(date)
 
 Panel Web: http://$(curl -s ifconfig.me || echo "TU-IP-PUBLICA"):7000
@@ -478,13 +400,6 @@ SHOUTcast:
 - Admin: http://$(curl -s ifconfig.me || echo "TU-IP-PUBLICA"):8000/admin.cgi
 - Contraseña Admin: admin_geeks_2024
 - Contraseña Source: source_geeks_2024
-
-Icecast:
-- Puerto: 8080
-- Admin: http://$(curl -s ifconfig.me || echo "TU-IP-PUBLICA"):8080/admin/
-- Usuario Admin: admin
-- Contraseña Admin: geeks_admin_2024
-- Contraseña Source: geeks_source_2024
 
 Base de Datos MySQL:
 - Base de datos: geeks_streaming
@@ -525,15 +440,12 @@ echo -e "${WHITE}│${NC} 🔑 ${YELLOW}Credenciales por defecto:${NC}"
 echo -e "${WHITE}│${NC}    Usuario: admin@geeksstreaming.com"
 echo -e "${WHITE}│${NC}    Contraseña: admin123"
 echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 📡 ${PURPLE}Servidores de Streaming:${NC}"
-echo -e "${WHITE}│${NC}    SHOUTcast: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8000/admin.cgi"
-echo -e "${WHITE}│${NC}    Icecast: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8080/admin/"
+echo -e "${WHITE}│${NC} 📡 ${PURPLE}Servidor de Streaming SHOUTcast:${NC}"
+echo -e "${WHITE}│${NC}    Admin: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8000/admin.cgi"
 echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 🔐 ${CYAN}Credenciales Icecast:${NC}"
-echo -e "${WHITE}│${NC}    Admin User: admin"
-echo -e "${WHITE}│${NC}    Admin Password: geeks_admin_2024"
-echo -e "${WHITE}│${NC}    Source Password: geeks_source_2024"
-echo -e "${WHITE}│${NC}    Relay Password: geeks_relay_2024"
+echo -e "${WHITE}│${NC} 🔐 ${CYAN}Credenciales SHOUTcast:${NC}"
+echo -e "${WHITE}│${NC}    Admin Password: admin_geeks_2024"
+echo -e "${WHITE}│${NC}    Source Password: source_geeks_2024"
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC} 📋 ${GRAY}Log detallado:${NC} $LOG_FILE"
 echo -e "${WHITE}│${NC}"
@@ -552,4 +464,4 @@ echo "║              Usa 'sudo ./install.sh -v' para modo verbose             
 echo "╚═══════════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-log_success "Instalación de Sonic Panel completada exitosamente"
+log_success "Instalación de Sonic Panel (Solo SHOUTcast) completada exitosamente"
