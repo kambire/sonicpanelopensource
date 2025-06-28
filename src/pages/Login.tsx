@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Radio } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,33 +24,44 @@ const Login = () => {
     setError("");
 
     try {
+      console.log("Intentando login con:", email);
+      
       // Simular autenticación - en producción esto se conectaría a tu API MySQL
       if (email === "admin@sonicpanel.com" && password === "admin123") {
-        localStorage.setItem("user", JSON.stringify({
+        const userData = {
           id: 1,
           email: "admin@sonicpanel.com",
           name: "Administrador",
-          role: "admin"
-        }));
+          role: "admin" as const
+        };
+        login(userData);
+        console.log("Login exitoso como admin");
         navigate("/");
       } else if (email === "user@radio.com" && password === "user123") {
-        localStorage.setItem("user", JSON.stringify({
+        const userData = {
           id: 2,
           email: "user@radio.com",
           name: "Usuario Radio",
-          role: "user",
-          stationId: 1
-        }));
+          role: "user" as const,
+          stationId: 1,
+          stationName: "Radio Demo"
+        };
+        login(userData);
+        console.log("Login exitoso como usuario");
         navigate("/");
       } else {
         setError("Credenciales incorrectas");
+        console.log("Credenciales incorrectas");
       }
     } catch (err) {
+      console.error("Error en login:", err);
       setError("Error al iniciar sesión");
     } finally {
       setLoading(false);
     }
   };
+
+  console.log("Renderizando Login component");
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 p-4">
