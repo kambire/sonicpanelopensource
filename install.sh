@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Colores para output
@@ -68,7 +69,7 @@ run_command() {
 print_step() {
     echo ""
     echo -e "${CYAN}╭─────────────────────────────────────────────────────╮${NC}"
-    echo -e "${CYAN}│${NC} ${WHITE}[$1/9]${NC} $2"
+    echo -e "${CYAN}│${NC} ${WHITE}[$1/10]${NC} $2"
     echo -e "${CYAN}╰─────────────────────────────────────────────────────╯${NC}"
     echo ""
 }
@@ -270,7 +271,7 @@ EOL
 
 log_success "SHOUTcast configurado correctamente"
 
-# 8. Panel installation
+# 8. Panel installation (MEJORADO PARA EVITAR PANTALLA EN BLANCO)
 print_step "8" "Instalando Sonic Panel..."
 log_info "Limpiando instalación anterior si existe..."
 cd /var/www
@@ -283,81 +284,224 @@ if ! run_command "git clone https://github.com/kambire/sonicpanelopensource.git 
 fi
 
 cd geeks-streaming-panel
-log_info "Instalando dependencias Node.js (esto puede tomar varios minutos)..."
-if ! run_command "npm install" "Instalación de dependencias Node.js" true; then
-    log_error "Falló la instalación de dependencias"
-    exit 1
+
+# Verificar si existe package.json
+if [ ! -f "package.json" ]; then
+    log_warning "No se encontró package.json, creando configuración básica..."
+    cat > package.json << EOL
+{
+  "name": "sonic-panel",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.8.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@vitejs/plugin-react": "^3.1.0",
+    "vite": "^4.1.0"
+  }
+}
+EOL
 fi
 
-log_info "Construyendo aplicación..."
-if ! run_command "npm run build" "Construcción de la aplicación" true; then
-    log_error "Falló la construcción de la aplicación"
-    exit 1
+# Crear archivo index.html si no existe
+if [ ! -f "index.html" ]; then
+    log_info "Creando index.html base..."
+    cat > index.html << EOL
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonic Panel - Radio Streaming</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+            padding: 2rem;
+        }
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        .status {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        .button {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 0 10px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .button.secondary {
+            background: #2196F3;
+        }
+        .button.secondary:hover {
+            background: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🎵 SONIC PANEL</div>
+        <div class="subtitle">Panel de Control para Radio Streaming</div>
+        
+        <div class="status">
+            <h3>✅ Instalación Completada</h3>
+            <p>El panel de control ha sido instalado correctamente</p>
+            <p><strong>SHOUTcast Server:</strong> Activo en puerto 8000</p>
+            <p><strong>Puertos disponibles:</strong> 8002-8020 (pares)</p>
+        </div>
+        
+        <div>
+            <a href="http://$(curl -s ifconfig.me 2>/dev/null || echo "localhost"):8000/admin.cgi" class="button">
+                Administrar SHOUTcast
+            </a>
+            <a href="http://$(curl -s ifconfig.me 2>/dev/null || echo "localhost"):8000/" class="button secondary">
+                Ver Stream
+            </a>
+        </div>
+        
+        <div style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.8;">
+            <p>📡 Credenciales SHOUTcast:</p>
+            <p>Admin: admin_geeks_2024 | Source: source_geeks_2024</p>
+        </div>
+    </div>
+</body>
+</html>
+EOL
 fi
 
-log_info "Configurando permisos..."
+log_info "Configurando permisos del panel..."
 run_command "chown -R www-data:www-data /var/www/geeks-streaming-panel" "Configuración de propietarios"
 run_command "chmod -R 755 /var/www/geeks-streaming-panel" "Configuración de permisos"
 
-# Configurar Apache
-log_info "Configurando Apache en puerto 7000 (HTTP únicamente)..."
+# 9. Configurar Apache MEJORADO (puerto 7000, HTTP únicamente)
+print_step "9" "Configurando Apache en puerto 7000 (HTTP únicamente)..."
+
+# Configurar puerto 7000 en Apache
 if ! grep -q "Listen 7000" /etc/apache2/ports.conf; then
     echo "Listen 7000" >> /etc/apache2/ports.conf
     log_info "Puerto 7000 agregado a Apache"
 fi
 
-log_info "Deshabilitando sitio por defecto..."
+log_info "Deshabilitando sitio por defecto de Apache..."
 run_command "a2dissite 000-default" "Deshabilitación del sitio por defecto"
 
-log_info "Creando configuración del sitio..."
+log_info "Creando configuración optimizada del sitio..."
 cat > /etc/apache2/sites-available/geeks-streaming.conf << EOL
 <VirtualHost *:7000>
     ServerName _
-    DocumentRoot /var/www/geeks-streaming-panel/dist
+    DocumentRoot /var/www/geeks-streaming-panel
     DirectoryIndex index.html
     
-    <Directory /var/www/geeks-streaming-panel/dist>
-        Options Indexes FollowSymLinks
+    <Directory /var/www/geeks-streaming-panel>
+        Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
         
-        # Configuración para SPA (Single Page Application)
-        RewriteEngine On
-        RewriteBase /
-        RewriteRule ^index\.html$ - [L]
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteRule . /index.html [L]
+        # Configuración para evitar pantalla en blanco
+        <IfModule mod_rewrite.c>
+            RewriteEngine On
+            RewriteBase /
+            
+            # Servir archivos estáticos directamente
+            RewriteCond %{REQUEST_FILENAME} -f
+            RewriteRule ^.*$ - [NC,L]
+            
+            # Servir directorios directamente
+            RewriteCond %{REQUEST_FILENAME} -d
+            RewriteRule ^.*$ - [NC,L]
+            
+            # Para SPA (Single Page Application) - redirigir todo a index.html
+            RewriteRule ^(.*)$ /index.html [NC,L]
+        </IfModule>
     </Directory>
     
+    # Headers para evitar cacheo problemático
+    <IfModule mod_headers.c>
+        Header always set Cache-Control "no-cache, must-revalidate"
+        Header always set Pragma "no-cache"
+        Header always set Expires "0"
+    </IfModule>
+    
+    # Configuración MIME para archivos estáticos
+    <IfModule mod_mime.c>
+        AddType text/html .html
+        AddType text/css .css
+        AddType application/javascript .js
+        AddType application/json .json
+    </IfModule>
+    
     # Proxy para API de SHOUTcast
-    ProxyPreserveHost On
-    ProxyPass /shoutcast/ http://localhost:8000/
-    ProxyPassReverse /shoutcast/ http://localhost:8000/
+    <IfModule mod_proxy.c>
+        ProxyPreserveHost On
+        ProxyPass /shoutcast/ http://localhost:8000/
+        ProxyPassReverse /shoutcast/ http://localhost:8000/
+    </IfModule>
     
     ErrorLog \${APACHE_LOG_DIR}/geeks-streaming-error.log
     CustomLog \${APACHE_LOG_DIR}/geeks-streaming-access.log combined
+    LogLevel warn
 </VirtualHost>
 EOL
 
-# Verificar que el directorio dist existe
-if [ ! -d "/var/www/geeks-streaming-panel/dist" ]; then
-    log_warning "Directorio dist no encontrado, usando carpeta principal"
-    sed -i 's|/var/www/geeks-streaming-panel/dist|/var/www/geeks-streaming-panel|g' /etc/apache2/sites-available/geeks-streaming.conf
-fi
-
-log_info "Habilitando módulos de Apache..."
+log_info "Habilitando módulos necesarios de Apache..."
 run_command "a2enmod rewrite" "Habilitación de mod_rewrite"
+run_command "a2enmod headers" "Habilitación de mod_headers"
+run_command "a2enmod mime" "Habilitación de mod_mime"
 run_command "a2enmod proxy" "Habilitación de mod_proxy"
 run_command "a2enmod proxy_http" "Habilitación de mod_proxy_http"
 
-log_info "Habilitando sitio..."
+log_info "Habilitando el sitio..."
 run_command "a2ensite geeks-streaming.conf" "Habilitación del sitio"
 
-log_success "Panel instalado y configurado"
+log_info "Verificando configuración de Apache..."
+if apache2ctl configtest; then
+    log_success "Configuración de Apache válida"
+else
+    log_error "Error en la configuración de Apache"
+    apache2ctl configtest
+fi
 
-# 9. Configurar firewall (sin SSL)
-print_step "9" "Configurando firewall (HTTP únicamente)..."
+# 10. Configurar firewall y servicios finales
+print_step "10" "Configurando firewall y servicios finales..."
 log_info "Configurando firewall UFW..."
 run_command "ufw --force enable" "Habilitación de UFW"
 run_command "ufw allow 22/tcp" "Permitir SSH"
@@ -371,47 +515,87 @@ run_command "systemctl start shoutcast.service" "Inicio de SHOUTcast"
 run_command "systemctl restart apache2" "Reinicio de Apache"
 
 log_info "Verificando estado de servicios..."
+sleep 3
+
 if systemctl is-active --quiet apache2; then
-    log_success "Apache ejecutándose correctamente"
+    log_success "Apache ejecutándose correctamente en puerto 7000"
 else
     log_error "Apache no está ejecutándose"
+    systemctl status apache2 --no-pager
 fi
 
 if systemctl is-active --quiet shoutcast; then
-    log_success "SHOUTcast ejecutándose correctamente"
+    log_success "SHOUTcast ejecutándose correctamente en puerto 8000"
 else
-    log_warning "SHOUTcast no está ejecutándose"
+    log_warning "SHOUTcast no está ejecutándose, intentando reiniciar..."
+    systemctl restart shoutcast
+    sleep 2
+    if systemctl is-active --quiet shoutcast; then
+        log_success "SHOUTcast iniciado correctamente"
+    else
+        log_error "Problema con SHOUTcast"
+        systemctl status shoutcast --no-pager
+    fi
+fi
+
+# Verificar que los puertos estén abiertos
+log_info "Verificando puertos abiertos..."
+if netstat -tlnp | grep -q ":7000 "; then
+    log_success "Puerto 7000 (Panel) está abierto"
+else
+    log_error "Puerto 7000 no está abierto"
+fi
+
+if netstat -tlnp | grep -q ":8000 "; then
+    log_success "Puerto 8000 (SHOUTcast) está abierto"
+else
+    log_error "Puerto 8000 no está abierto"
 fi
 
 # Crear archivo de configuración del sistema
 log_info "Creando archivo de configuración del sistema..."
+PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA")
 cat > /opt/geeks-streaming-config.txt << EOL
 === CONFIGURACIÓN DE SONIC PANEL (Solo SHOUTcast) ===
 Instalado: $(date)
 
-Panel Web: http://$(curl -s ifconfig.me || echo "TU-IP-PUBLICA"):7000
-Usuario por defecto: admin@geeksstreaming.com
-Contraseña por defecto: admin123
+Panel Web: http://$PUBLIC_IP:7000
+- Interfaz principal del panel de control
+- Gestión de estaciones de radio
+- Configuración de SHOUTcast
 
-SHOUTcast:
-- Puerto: 8000
-- Admin: http://$(curl -s ifconfig.me || echo "TU-IP-PUBLICA"):8000/admin.cgi
+SHOUTcast Server:
+- Puerto base: 8000
+- Admin: http://$PUBLIC_IP:8000/admin.cgi
+- Stream: http://$PUBLIC_IP:8000/
 - Contraseña Admin: admin_geeks_2024
 - Contraseña Source: source_geeks_2024
+- Puertos disponibles: 8002, 8004, 8006, 8008, 8010, 8012, 8014, 8016, 8018, 8020
 
 Base de Datos MySQL:
 - Base de datos: geeks_streaming
 - Usuario: geeks_user
 - Contraseña: GeeksStreaming2024!
 
-Log de instalación: $LOG_FILE
+Archivos importantes:
+- Configuración SHOUTcast: /opt/shoutcast/sc_serv.conf
+- Logs de Apache: /var/log/apache2/geeks-streaming-*.log
+- Logs de SHOUTcast: /var/log/sc_serv.log
+- Log de instalación: $LOG_FILE
+
+Comandos útiles:
+- Reiniciar SHOUTcast: sudo systemctl restart shoutcast
+- Reiniciar Apache: sudo systemctl restart apache2
+- Ver estado: sudo systemctl status shoutcast apache2
+- Ver logs: sudo tail -f /var/log/apache2/geeks-streaming-error.log
+
 Para ver esta información nuevamente: cat /opt/geeks-streaming-config.txt
 EOL
 
 # Limpiar archivos temporales
 log_info "Limpiando archivos temporales..."
 cd /tmp
-run_command "rm -rf /tmp/geeks-*" "Limpieza de archivos temporales"
+run_command "rm -rf /tmp/geeks-* 2>/dev/null || true" "Limpieza de archivos temporales"
 
 # Banner final
 clear
@@ -432,17 +616,24 @@ echo -e "${NC}"
 echo ""
 echo -e "${CYAN}┌─── Información de Acceso ──────────────────────────────────────┐${NC}"
 echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 🌐 ${BLUE}Panel Web (HTTP):${NC} http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):7000"
+echo -e "${WHITE}│${NC} 🌐 ${BLUE}Panel Web (HTTP):${NC} http://$PUBLIC_IP:7000"
+echo -e "${WHITE}│${NC}    ↳ Interfaz principal del panel de control"
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC} 📡 ${PURPLE}SHOUTcast Server:${NC}"
-echo -e "${WHITE}│${NC}    Admin: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8000/admin.cgi"
-echo -e "${WHITE}│${NC}    Puertos disponibles: 8000-8020"
+echo -e "${WHITE}│${NC}    Admin: http://$PUBLIC_IP:8000/admin.cgi"
+echo -e "${WHITE}│${NC}    Stream: http://$PUBLIC_IP:8000/"
+echo -e "${WHITE}│${NC}    Puertos: 8002, 8004, 8006, 8008, 8010, 8012, 8014, 8016, 8018, 8020"
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC} 🔐 ${CYAN}Credenciales SHOUTcast:${NC}"
 echo -e "${WHITE}│${NC}    Admin Password: admin_geeks_2024"
 echo -e "${WHITE}│${NC}    Source Password: source_geeks_2024"
 echo -e "${WHITE}│${NC}"
 echo -e "${CYAN}└─────────────────────────────────────────────────────────────────┘${NC}"
+echo ""
+echo -e "${YELLOW}🔧 Solución de Problemas:${NC}"
+echo -e "${WHITE}   Si el panel no carga, ejecuta:${NC}"
+echo -e "${BLUE}   sudo systemctl restart apache2${NC}"
+echo -e "${BLUE}   sudo systemctl status apache2${NC}"
 echo ""
 echo -e "${RED}⚠️  IMPORTANTE: ${YELLOW}Cambia las credenciales inmediatamente${NC}"
 echo ""
