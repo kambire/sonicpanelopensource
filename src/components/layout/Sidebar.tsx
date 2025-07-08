@@ -29,11 +29,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { useAuth } from "@/hooks/useAuth"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user, isAdmin } = useAuth();
-
   const navigationItems = [
     {
       title: "Dashboard",
@@ -118,9 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Sonic Panel</span>
-                  <span className="truncate text-xs">
-                    {user?.role === "admin" ? "Administración" : user?.stationName || "Panel de Radio"}
-                  </span>
+                  <span className="truncate text-xs">Panel de Radio</span>
                 </div>
               </a>
             </SidebarMenuButton>
@@ -145,24 +140,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
         
-        {/* Mostrar sección de administración solo para admins */}
-        {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administración</SidebarGroupLabel>
-            <SidebarMenu>
-              {adminItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
+        <SidebarGroup>
+          <SidebarGroupLabel>Administración</SidebarGroupLabel>
+          <SidebarMenu>
+            {adminItems.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild>
+                  <a href={item.url}>
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
       
       <SidebarFooter>
@@ -170,7 +162,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton>
               <User />
-              <span>{user?.name || "Usuario"}</span>
+              <span>Usuario</span>
               <ChevronUp className="ml-auto" />
             </SidebarMenuButton>
           </SidebarMenuItem>
