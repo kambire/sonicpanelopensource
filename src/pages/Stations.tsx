@@ -1,6 +1,7 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StationCard from "@/components/stations/StationCard";
+import CreateStationDialog from "@/components/stations/CreateStationDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 const stationsData = [
   {
@@ -69,15 +70,12 @@ const Stations = () => {
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">My Stations</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Mis Estaciones SHOUTcast</h1>
             <p className="text-muted-foreground mt-1">
-              Manage and monitor your radio stations
+              Gestiona y monitorea tus estaciones de radio (Puertos 8002-8020)
             </p>
           </div>
-          <Button className="gap-1">
-            <Plus className="h-4 w-4" />
-            New Station
-          </Button>
+          <CreateStationDialog />
         </div>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -85,28 +83,28 @@ const Stations = () => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search stations..."
+              placeholder="Buscar estaciones..."
               className="w-full pl-8"
             />
           </div>
           <div className="flex gap-2">
             <Select defaultValue="all">
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="offline">Offline</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="online">En línea</SelectItem>
+                <SelectItem value="offline">Fuera de línea</SelectItem>
               </SelectContent>
             </Select>
             <Select defaultValue="name">
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="Sort By" />
+                <SelectValue placeholder="Ordenar" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="listeners">Listeners</SelectItem>
+                <SelectItem value="name">Nombre</SelectItem>
+                <SelectItem value="listeners">Oyentes</SelectItem>
                 <SelectItem value="bitrate">Bitrate</SelectItem>
               </SelectContent>
             </Select>

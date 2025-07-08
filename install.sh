@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # Colores para output
@@ -114,7 +113,7 @@ echo "║    ╚══════╝ ╚═════╝ ╚═╝  ╚══
 echo "║                                                                      ║"
 echo "║                     🎵 INSTALACIÓN AUTOMÁTICA 🎵                     ║"
 echo "║                        Panel de Radio Streaming                      ║"
-echo "║                        Solo SHOUTcast Server                         ║"
+echo "║                    SOLO SHOUTcast - Sin SSL/HTTPS                    ║"
 echo "║                                                                      ║"
 echo "╚══════════════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
@@ -165,7 +164,7 @@ if ! run_command "apt upgrade -y" "Actualización de paquetes del sistema"; then
     exit 1
 fi
 
-# 2. Instalar dependencias básicas
+# 2. Instalar dependencias básicas (sin SSL)
 print_step "2" "Instalando dependencias básicas..."
 BASIC_DEPS="curl wget unzip git build-essential software-properties-common debconf-utils"
 log_info "Instalando: $BASIC_DEPS"
@@ -174,8 +173,8 @@ if ! run_command "apt install -y $BASIC_DEPS" "Instalación de dependencias bás
     exit 1
 fi
 
-# 3. Instalar Apache y PHP
-print_step "3" "Instalando servidor web (Apache + PHP)..."
+# 3. Instalar Apache y PHP (sin SSL)
+print_step "3" "Instalando servidor web (Apache + PHP - Solo HTTP)..."
 PHP_PACKAGES="apache2 php php-cli php-fpm php-mysql php-mbstring php-xml php-curl php-zip php-gd php-json"
 log_info "Instalando Apache y PHP con extensiones necesarias..."
 if ! run_command "apt install -y $PHP_PACKAGES" "Instalación de Apache y PHP"; then
@@ -223,8 +222,8 @@ fi
 
 log_info "Node.js instalado: $(node --version), NPM: $(npm --version)"
 
-# 7. Instalar SHOUTcast solamente
-print_step "7" "Instalando SHOUTcast..."
+# 7. Instalar SOLO SHOUTcast (eliminar Icecast2 completamente)
+print_step "7" "Instalando SHOUTcast (SOLAMENTE)..."
 log_info "Creando directorio para SHOUTcast..."
 run_command "mkdir -p /opt/shoutcast" "Creación de directorio SHOUTcast"
 
@@ -239,7 +238,7 @@ log_info "Extrayendo SHOUTcast..."
 run_command "tar -xzf sc_serv.tar.gz" "Extracción de SHOUTcast"
 run_command "chmod +x sc_serv" "Configuración de permisos SHOUTcast"
 
-log_info "Creando configuración de SHOUTcast..."
+log_info "Creando configuración base de SHOUTcast..."
 cat > sc_serv.conf << EOL
 adminpassword=admin_geeks_2024
 password=source_geeks_2024
@@ -271,7 +270,7 @@ EOL
 
 log_success "SHOUTcast configurado correctamente"
 
-# 8. Clonar e instalar el panel
+# 8. Panel installation
 print_step "8" "Instalando Sonic Panel..."
 log_info "Limpiando instalación anterior si existe..."
 cd /var/www
@@ -301,7 +300,7 @@ run_command "chown -R www-data:www-data /var/www/geeks-streaming-panel" "Configu
 run_command "chmod -R 755 /var/www/geeks-streaming-panel" "Configuración de permisos"
 
 # Configurar Apache
-log_info "Configurando Apache en puerto 7000..."
+log_info "Configurando Apache en puerto 7000 (HTTP únicamente)..."
 if ! grep -q "Listen 7000" /etc/apache2/ports.conf; then
     echo "Listen 7000" >> /etc/apache2/ports.conf
     log_info "Puerto 7000 agregado a Apache"
@@ -357,14 +356,13 @@ run_command "a2ensite geeks-streaming.conf" "Habilitación del sitio"
 
 log_success "Panel instalado y configurado"
 
-# 9. Configurar firewall y servicios
-print_step "9" "Configurando firewall y servicios..."
+# 9. Configurar firewall (sin SSL)
+print_step "9" "Configurando firewall (HTTP únicamente)..."
 log_info "Configurando firewall UFW..."
 run_command "ufw --force enable" "Habilitación de UFW"
 run_command "ufw allow 22/tcp" "Permitir SSH"
 run_command "ufw allow 7000/tcp" "Permitir puerto 7000 (Panel)"
-run_command "ufw allow 443/tcp" "Permitir HTTPS"
-run_command "ufw allow 8000/tcp" "Permitir puerto 8000 (SHOUTcast)"
+run_command "ufw allow 8000:8020/tcp" "Permitir puertos 8000-8020 (SHOUTcast)"
 
 log_info "Configurando servicios del sistema..."
 run_command "systemctl daemon-reload" "Recarga de demonios systemd"
@@ -434,20 +432,15 @@ echo -e "${NC}"
 echo ""
 echo -e "${CYAN}┌─── Información de Acceso ──────────────────────────────────────┐${NC}"
 echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 🌐 ${BLUE}Panel Web:${NC} http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):7000"
+echo -e "${WHITE}│${NC} 🌐 ${BLUE}Panel Web (HTTP):${NC} http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):7000"
 echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 🔑 ${YELLOW}Credenciales por defecto:${NC}"
-echo -e "${WHITE}│${NC}    Usuario: admin@geeksstreaming.com"
-echo -e "${WHITE}│${NC}    Contraseña: admin123"
-echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 📡 ${PURPLE}Servidor de Streaming SHOUTcast:${NC}"
+echo -e "${WHITE}│${NC} 📡 ${PURPLE}SHOUTcast Server:${NC}"
 echo -e "${WHITE}│${NC}    Admin: http://$(curl -s ifconfig.me 2>/dev/null || echo "TU-IP-PUBLICA"):8000/admin.cgi"
+echo -e "${WHITE}│${NC}    Puertos disponibles: 8000-8020"
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC} 🔐 ${CYAN}Credenciales SHOUTcast:${NC}"
 echo -e "${WHITE}│${NC}    Admin Password: admin_geeks_2024"
 echo -e "${WHITE}│${NC}    Source Password: source_geeks_2024"
-echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC} 📋 ${GRAY}Log detallado:${NC} $LOG_FILE"
 echo -e "${WHITE}│${NC}"
 echo -e "${CYAN}└─────────────────────────────────────────────────────────────────┘${NC}"
 echo ""
@@ -464,4 +457,4 @@ echo "║              Usa 'sudo ./install.sh -v' para modo verbose             
 echo "╚═══════════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-log_success "Instalación de Sonic Panel (Solo SHOUTcast) completada exitosamente"
+log_success "Instalación de Sonic Panel (Solo SHOUTcast, Sin SSL) completada exitosamente"
