@@ -23,19 +23,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  // Para testing, crear un usuario admin por defecto
   useEffect(() => {
-    console.log("AuthProvider: Verificando usuario almacenado");
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        console.log("AuthProvider: Usuario encontrado en localStorage", userData);
-        setUser(userData);
-      } catch (error) {
-        console.error("AuthProvider: Error al parsear usuario almacenado", error);
-        localStorage.removeItem("user");
-      }
-    }
+    console.log("AuthProvider: Inicializando usuario para testing");
+    const testUser: User = {
+      id: 1,
+      name: "Administrador",
+      email: "admin@test.com",
+      role: "admin"
+    };
+    setUser(testUser);
+    localStorage.setItem("user", JSON.stringify(testUser));
   }, []);
 
   const login = (userData: User) => {
